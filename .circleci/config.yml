@@ -6,4 +6,7 @@ jobs:
     steps:
       - checkout
       - run: go get
-      - run: make test
+      - run: mkdir -p ~/junit
+      - run: gotestsum --junitfile "~/junit/junit.xml"
+      - store_test_results:
+          path: ~/junit
