@@ -1,0 +1,115 @@
+package jenkins
+
+import (
+	"testing"
+)
+
+func TestRenderTemplate(t *testing.T) {
+	// Set up inputs
+	input := "<root>{{ .Name }}</root>"
+	expected := "<root>Test Name</root>"
+
+	// Set up Job
+	job := resourceJenkinsJob()
+	d := job.TestResourceData()
+	d.Set("name", "Test Name")
+	d.Set("parameters", map[string]string{"Param": "Test"})
+
+	// Test simple
+	if actual, err := renderTemplate(input, d); err != nil {
+		t.Fatal(err)
+	} else if actual != expected {
+		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
+	}
+
+	// Now with a fully populated template
+	input = `<root>
+	<name>{{ .Name }}</name>
+	<parameters>
+		{{ range $key, $value := .Parameters -}}
+		<parameter>{{ $key }}: {{ $value }}</parameter>
+		{{- end }}
+	</parameters>
+</root>
+`
+
+	expected = `<root>
+	<name>Test Name</name>
+	<parameters>
+		<parameter>Param: Test</parameter>
+	</parameters>
+</root>
+`
+
+	if actual, err := renderTemplate(input, d); err != nil {
+		t.Fatal(err)
+	} else if actual != expected {
+		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
+	}
+}
+
+func TestRenderTemplateFolder(t *testing.T) {
+	// Set up inputs
+	input := "<root>Test {{ .Description }}</root>"
+	expected := "<root>Test Case</root>"
+
+	// Set up Job
+	job := resourceJenkinsFolder()
+	d := job.TestResourceData()
+	d.Set("name", "Test Name")
+	d.Set("description", "Case")
+	d.Set("permissions", []string{"Test Permission"})
+
+	// Test simple
+	if actual, err := renderTemplate(input, d); err != nil {
+		t.Fatal(err)
+	} else if actual != expected {
+		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
+	}
+
+	// Now with a fully populated template
+	input = `<root>
+	<name>{{ .Name }}</name>
+	<description>{{ .Description }}</description>
+	<permissions>
+		{{ range $value := .Permissions -}}
+		<permission>{{ $value }}</permission>
+		{{- end }}
+	</permissions>
+</root>
+`
+
+	expected = `<root>
+	<name>Test Name</name>
+	<description>Case</description>
+	<permissions>
+		<permission>Test Permission</permission>
+	</permissions>
+</root>
+`
+
+	if actual, err := renderTemplate(input, d); err != nil {
+		t.Fatal(err)
+	} else if actual != expected {
+		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
+	}
+}
+
+func TestRenderTemplateInvalid(t *testing.T) {
+	// Set up Job
+	job := resourceJenkinsFolder()
+	d := job.TestResourceData()
+	d.Set("name", "Test Name")
+
+	// Now an invalid template
+	input := "i am invalid{{ end }}"
+	if _, err := renderTemplate(input, d); err == nil {
+		t.Errorf("Expected an error to be emitted with an invalid template: %s", err)
+	}
+
+	// Now valid but with an unbound parameter
+	input = "i am {{ .Mostly }} valid"
+	if _, err := renderTemplate(input, d); err == nil {
+		t.Errorf("Expected an error to be emitted with an invalid template: %s", err)
+	}
+}
