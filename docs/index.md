@@ -1,7 +1,7 @@
 ---
-title: {{site.title}}
+title: "Home"
 description: |-
-  The Amazon Web Services (AWS) provider is used to interact with the many resources supported by AWS. The provider needs to be configured with the proper credentials before it can be used.
+  The Jenkins provider is used to interact with the Jenkins API. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
 The Jenkins provider is used to interact with the Jenkins API. The provider needs to be configured with the proper credentials before it can be used.
