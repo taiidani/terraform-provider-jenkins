@@ -2,3 +2,6 @@ runner:
   build:
     image: codeship
     dockerfile: codeship.dockerfile
+  add_docker: true
+  volumes:
+  - ./:/app
