@@ -5,6 +5,7 @@ services:
     build:
       image: codeship
       dockerfile: codeship.dockerfile
+    depends_on: [ jenkins ]
     add_docker: true
     cached: true
     volumes:
