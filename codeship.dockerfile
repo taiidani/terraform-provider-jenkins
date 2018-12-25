@@ -6,3 +6,8 @@ RUN wget https://releases.hashicorp.com/terraform/0.11.8/terraform_0.11.8_linux_
 
 WORKDIR /app
 USER root
+
+COPY go.mod go.sum /app/
+RUN go mod download
+
+COPY . /app

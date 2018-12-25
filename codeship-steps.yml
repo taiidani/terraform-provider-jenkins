@@ -1,6 +1,3 @@
-- name: Get Dependencies
-  service: runner
-  command: go get
 - name: Run Acceptance Tests
   service: runner
   command: make testacc DOCKER_URL=jenkins-provider-acc

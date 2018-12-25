@@ -8,9 +8,6 @@ services:
     depends_on: [ jenkins-provider-acc ]
     add_docker: true
     cached: true
-    volumes:
-    - ./:/app
-    - /tmp/go:/go
 
   jenkins-provider-acc:
     build:
