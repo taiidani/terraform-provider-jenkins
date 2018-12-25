@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jenkins-provider-acc
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"

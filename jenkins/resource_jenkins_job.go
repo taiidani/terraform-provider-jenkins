@@ -41,16 +41,16 @@ func resourceJenkinsJobExists(d *schema.ResourceData, meta interface{}) (b bool,
 	client := meta.(*jenkins.Jenkins)
 	name := d.Id()
 
-	log.Printf("[DEBUG] jenkins::exists - checking if job %q exists", name)
+	log.Printf("[DEBUG] jenkins::exists - Checking if job %q exists", name)
 
 	_, err := client.GetJob(name)
 	if err != nil {
-		log.Printf("[DEBUG] jenkins::exists - job %q does not exist: %v", name, err)
+		log.Printf("[DEBUG] jenkins::exists - Job %q does not exist: %v", name, err)
 		d.SetId("")
 		return false, nil
 	}
 
-	log.Printf("[DEBUG] jenkins::exists - job %q exists", name)
+	log.Printf("[DEBUG] jenkins::exists - Job %q exists", name)
 	return true, nil
 }
 
@@ -61,13 +61,13 @@ func resourceJenkinsJobCreate(d *schema.ResourceData, meta interface{}) (err err
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::create - error binding config.xml template to %q: %v", name, err)
+		log.Printf("[ERROR] jenkins::create - Error binding config.xml template to %q: %v", name, err)
 		return err
 	}
 
 	_, err = client.CreateJobInFolder(xml, baseName, folders...)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::create - error creating job for %q: %v", name, err)
+		log.Printf("[ERROR] jenkins::create - Error creating job for %q: %v", name, err)
 		return err
 	}
 
@@ -81,21 +81,21 @@ func resourceJenkinsJobRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*jenkins.Jenkins)
 	name := d.Id()
 
-	log.Printf("[DEBUG] jenkins::read - looking for job %q", name)
+	log.Printf("[DEBUG] jenkins::read - Looking for job %q", name)
 
 	job, err := client.GetJob(name)
 	if err != nil {
-		log.Printf("[DEBUG] jenkins::read - job %q does not exist: %v", name, err)
+		log.Printf("[DEBUG] jenkins::read - Job %q does not exist: %v", name, err)
 		return err
 	}
 
 	config, err := job.GetConfig()
 	if err != nil {
-		log.Printf("[DEBUG] jenkins::read - job %q could not extract configuration: %v", name, err)
+		log.Printf("[DEBUG] jenkins::read - Job %q could not extract configuration: %v", name, err)
 		return err
 	}
 
-	log.Printf("[DEBUG] jenkins::read - job %q exists", name)
+	log.Printf("[DEBUG] jenkins::read - Job %q exists", name)
 	d.Set("template", config)
 
 	return nil
@@ -110,13 +110,13 @@ func resourceJenkinsJobUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::update - error binding config.xml template to %q: %v", name, err)
+		log.Printf("[ERROR] jenkins::update - Error binding config.xml template to %q: %v", name, err)
 		return err
 	}
 
 	err = job.UpdateConfig(xml)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::update - error updating job %q configuration: %v", name, err)
+		log.Printf("[ERROR] jenkins::update - Error updating job %q configuration: %v", name, err)
 		return err
 	}
 
@@ -127,10 +127,10 @@ func resourceJenkinsJobDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*jenkins.Jenkins)
 	name := d.Id()
 
-	log.Printf("[DEBUG] jenkins_pipeline::delete - removing %q", name)
+	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)
 
 	ok, err := client.DeleteJob(name)
 
-	log.Printf("[DEBUG] jenkins_pipeline::delete - %q removed: %t", name, ok)
+	log.Printf("[DEBUG] jenkins::delete - %q removed: %t", name, ok)
 	return err
 }
