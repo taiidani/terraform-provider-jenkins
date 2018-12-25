@@ -6,7 +6,6 @@ services:
       image: codeship
       dockerfile: codeship.dockerfile
     depends_on: [ jenkins-provider-acc ]
-    add_docker: true
     cached: true
 
   jenkins-provider-acc:
