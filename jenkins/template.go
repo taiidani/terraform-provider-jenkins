@@ -18,12 +18,12 @@ type job struct {
 }
 
 func renderTemplate(data string, d *schema.ResourceData) (string, error) {
-	log.Printf("[DEBUG] jenkins::xml - binding template:\n%s", data)
+	log.Printf("[DEBUG] jenkins::xml - Binding template:\n%s", data)
 
 	// create and parse the config.xml template
 	tpl, err := template.New("template").Parse(data)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::xml - error parsing template: %v", err)
+		log.Printf("[ERROR] jenkins::xml - Error parsing template: %v", err)
 		return "", err
 	}
 
@@ -53,11 +53,11 @@ func renderTemplate(data string, d *schema.ResourceData) (string, error) {
 	var buffer bytes.Buffer
 	err = tpl.Execute(&buffer, j)
 	if err != nil {
-		log.Printf("[ERROR] jenkis::xml - error executing template: %v", err)
+		log.Printf("[ERROR] jenkis::xml - Error executing template: %v", err)
 		return "", err
 	}
 
 	xml := buffer.String()
-	log.Printf("[DEBUG] jenkins::xml - bound template:\n%s", xml)
+	log.Printf("[DEBUG] jenkins::xml - Bound template:\n%s", xml)
 	return xml, nil
 }

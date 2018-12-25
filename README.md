@@ -6,6 +6,11 @@
 
 This is a community provider and is not supported by Hashicorp.
 
+## Requirements
+
+- [Terraform](https://www.terraform.io/downloads.html) 0.10+
+- [Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+
 ## Installation
 
 Install the provider with:
@@ -20,18 +25,7 @@ Then copy or link the resulting binary to your [terraform.d plugins folder](http
 ln -s "$(go env GOPATH)/bin/terraform-provider-jenkins" "$HOME/.terraform.d/plugins/terraform-provider-jenkins"
 ```
 
-## Building the Provider
-
-### Requirements
-
-- [Terraform](https://www.terraform.io/downloads.html) 0.10+
-- [Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
-
-### Using the Provider
-
-If you're building the provider, follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) The `make install` target will work for most use cases. After placing it into your plugins directory,  run `terraform init` to initialize it. Documentation about the provider specific configuration options can be found on the [provider's website](https://www.terraform.io/docs/providers/aws/index.html).
-
-### Developing the Provider
+## Developing the Provider
 
 If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
@@ -41,6 +35,12 @@ In order to test the provider, you can simply run `make test`.
 
 ```sh
 $ make test
+```
+
+In order to run the full suite of Acceptance tests, run `make testacc`. These tests require Docker installed on the machine that run them, and do not create any remote resources.
+
+```sh
+$ make testacc
 ```
 
 ## Attribution
