@@ -5,14 +5,14 @@ services:
     build:
       image: codeship
       dockerfile: codeship.dockerfile
-    depends_on: [ jenkins ]
+    depends_on: [ jenkins-provider-acc ]
     add_docker: true
     cached: true
     volumes:
     - ./:/app
     - /tmp/go:/go
 
-  jenkins:
+  jenkins-provider-acc:
     build:
       image: jenkins-provider-acc
       dockerfile: jenkins/test-fixtures/Dockerfile
