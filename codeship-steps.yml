@@ -3,4 +3,4 @@
   command: go get
 - name: Run Acceptance Tests
   service: runner
-  command: make testacc
+  command: make testacc DOCKER_URL=jenkins-provider-acc

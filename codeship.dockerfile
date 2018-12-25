@@ -5,3 +5,4 @@ RUN wget https://releases.hashicorp.com/terraform/0.11.8/terraform_0.11.8_linux_
     && sudo mv terraform /usr/local/bin/
 
 WORKDIR /app
+USER root

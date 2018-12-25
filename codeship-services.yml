@@ -3,5 +3,6 @@ runner:
     image: codeship
     dockerfile: codeship.dockerfile
   add_docker: true
+  cached: true
   volumes:
   - ./:/app
