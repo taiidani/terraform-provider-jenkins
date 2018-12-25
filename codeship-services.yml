@@ -1,0 +1,4 @@
+runner:
+  build:
+    image: codeship
+    dockerfile: codeship.dockerfile
