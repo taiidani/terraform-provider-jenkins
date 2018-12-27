@@ -3,7 +3,7 @@
 
 # jenkins_folder
 
-Manages a folder within Jenkins.
+Manages a folder within Jenkins. The Jenkins installation that uses this resource is expected to have the [Cloudbees Folders Plugin](https://plugins.jenkins.io/cloudbees-folder) installed in their system.
 
 ## Example Usage
 
