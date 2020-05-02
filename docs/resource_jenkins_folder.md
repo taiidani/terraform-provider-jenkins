@@ -8,11 +8,11 @@ Manages a folder within Jenkins. The Jenkins installation that uses this resourc
 ## Example Usage
 
 ```hcl
-resource "jenkins_folder" "example" {
+resource jenkins_folder example {
     name = "folder-name"
 }
 
-resource "jenkins_folder" "example-child" {
+resource jenkins_folder example-child {
     name = "${jenkins_folder.example.name}/child-name"
 }
 ```

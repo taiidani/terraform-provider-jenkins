@@ -8,7 +8,7 @@ This is a community provider and is not supported by Hashicorp.
 
 ## Requirements
 
-- [Terraform](https://www.terraform.io/downloads.html) 0.10+
+- [Terraform](https://www.terraform.io/downloads.html) 0.12+
 - [Go](https://golang.org/doc/install) 1.11+ (to build the provider plugin)
 
 ## Installation

@@ -8,9 +8,9 @@ Manages a job within Jenkins.
 ## Example Usage
 
 ```hcl
-resource "jenkins_job" "example" {
+resource jenkins_job example {
   name     = "example"
-  template = "${file("${path.module}/job.xml")}"
+  template = file("${path.module}/job.xml")
 
   parameters = {
     description = "An example job created from Terraform"
