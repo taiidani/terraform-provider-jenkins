@@ -1,5 +1,7 @@
 module github.com/taiidani/terraform-provider-jenkins
 
+go 1.14
+
 require (
 	github.com/apparentlymart/go-cidr v1.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
