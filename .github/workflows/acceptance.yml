@@ -1,4 +1,4 @@
-name: Unit Tests
+name: Acceptance Tests
 
 on: pull_request
 
@@ -7,12 +7,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    services:
-      services:
-        nginx:
-          image: jenkins/jenkins:lts
-          env:
-            JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
     steps:
 
     - name: Set up Go 1.x
