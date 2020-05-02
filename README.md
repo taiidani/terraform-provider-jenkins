@@ -9,7 +9,7 @@ This is a community provider and is not supported by Hashicorp.
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) 0.10+
-- [Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+- [Go](https://golang.org/doc/install) 1.11+ (to build the provider plugin)
 
 ## Installation
 
@@ -37,7 +37,7 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`. These tests require Docker installed on the machine that run them, and do not create any remote resources.
+In order to run the full suite of Acceptance tests, run `make testacc`. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
 
 ```sh
 $ make testacc

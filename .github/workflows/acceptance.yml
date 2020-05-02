@@ -1,0 +1,37 @@
+name: Acceptance Tests
+
+on: pull_request
+
+jobs:
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - run: go mod download
+
+    - name: Set up services
+      env:
+        COMPOSE_FILE: ./.github/workflows/acceptance/docker-compose.yml
+      run: |
+        docker-compose build
+        docker-compose up -d --force-recreate jenkins
+        while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
+
+    - name: Run Acceptance Tests
+      env:
+        TF_ACC: "1"
+        JENKINS_URL: "http://localhost:8080"
+        JENKINS_USERNAME: "admin"
+        JENKINS_PASSWORD: "admin"
+      run: go test -v -cover ./...
