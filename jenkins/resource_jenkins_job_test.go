@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccJenkinsJob_basic(t *testing.T) {
@@ -44,9 +44,9 @@ func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
 
 func testAccJenkinsJobConfig(randString string) string {
 	return fmt.Sprintf(`
-resource "jenkins_job" "foo" {
+resource jenkins_job foo {
   name = "tf-acc-test-%s"
-  template = "${file("resource_jenkins_job_test.xml")}"
+  template = file("resource_jenkins_job_test.xml")
 
   parameters = {
 	  description = "Acceptance testing Jenkins provider"

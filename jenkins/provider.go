@@ -1,8 +1,8 @@
 package jenkins
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 // Provider creates a new Jenkins provider.
@@ -37,7 +37,7 @@ func Provider() terraform.ResourceProvider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"jenkins_folder": resourceJenkinsFolder(),
-			"jenkins_job": resourceJenkinsJob(),
+			"jenkins_job":    resourceJenkinsJob(),
 		},
 
 		ConfigureFunc: configureProvider,

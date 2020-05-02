@@ -4,7 +4,7 @@ import (
 	"log"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceJenkinsJob() *schema.Resource {

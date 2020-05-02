@@ -1,7 +1,7 @@
 package jenkins
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 const resourceJenkinsFolderTmpl = `<com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.6">

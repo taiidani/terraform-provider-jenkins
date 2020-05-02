@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // Job contains all the data pertaining to a Jenkins job, in a format that is
