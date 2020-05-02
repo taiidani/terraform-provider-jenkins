@@ -18,5 +18,8 @@ jobs:
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
 
+    - run: go mod download
+    - run: docker-compose build
+
     - name: Run Acceptance Tests
       run: make testacc
