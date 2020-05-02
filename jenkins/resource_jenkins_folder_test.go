@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform/helper/acctest"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccJenkinsFolder_basic(t *testing.T) {
@@ -44,7 +44,7 @@ func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
 
 func testAccJenkinsFolderConfig(randString string) string {
 	return fmt.Sprintf(`
-resource "jenkins_folder" "foo" {
+resource jenkins_folder foo {
   name = "tf-acc-test-%s"
   description = "Terraform acceptance tests %s"
 }
