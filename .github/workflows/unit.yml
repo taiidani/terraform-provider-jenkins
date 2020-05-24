@@ -20,4 +20,9 @@ jobs:
 
     - run: go mod download
     - run: go vet ./...
-    - run: go test -cover ./...
+
+    - name: Test
+      run: go test -race -covermode=atomic -coverprofile=coverage.txt ./...
+
+    - name: Send coverage to Codecov
+      run: bash <(curl -s https://codecov.io/bash) -Z -f coverage.txt
