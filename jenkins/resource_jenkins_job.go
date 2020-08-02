@@ -62,7 +62,7 @@ func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*jenkins.Jenkins)
+	client := meta.(jenkinsClient)
 	name := d.Id()
 
 	log.Printf("[DEBUG] jenkins::read - Looking for job %q", name)
@@ -112,7 +112,7 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*jenkins.Jenkins)
+	client := meta.(jenkinsClient)
 	name := d.Id()
 
 	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)

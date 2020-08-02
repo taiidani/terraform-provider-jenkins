@@ -1,6 +1,9 @@
 package jenkins
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -39,11 +42,11 @@ func Provider() *schema.Provider {
 			"jenkins_job":    resourceJenkinsJob(),
 		},
 
-		ConfigureFunc: configureProvider,
+		ConfigureContextFunc: configureProvider,
 	}
 }
 
-func configureProvider(d *schema.ResourceData) (interface{}, error) {
+func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		ServerURL: d.Get("server_url").(string),
 		CACert:    d.Get("ca_cert").(string),
@@ -53,7 +56,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 
 	client, err := newJenkinsClient(&config)
 	if err != nil {
-		return nil, err
+		return nil, diag.FromErr(err)
 	}
 
 	return client, nil

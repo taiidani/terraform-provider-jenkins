@@ -6,6 +6,11 @@ import (
 	jenkins "github.com/bndr/gojenkins"
 )
 
+type jenkinsClient interface {
+	DeleteJob(name string) (bool, error)
+	GetJob(id string, parentIDs ...string) (*jenkins.Job, error)
+}
+
 // Config is the set of parameters needed to configure the Jenkins provider.
 type Config struct {
 	ServerURL string
