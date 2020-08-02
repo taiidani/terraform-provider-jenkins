@@ -1,33 +1,32 @@
 package jenkins
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // Provider creates a new Jenkins provider.
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"server_url": &schema.Schema{
+			"server_url": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_URL", nil),
 				Description: "The URL of the Jenkins server to connect to.",
 			},
-			"ca_cert": &schema.Schema{
+			"ca_cert": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_CA_CERT", nil),
 				Description: "The path to the Jenkins self-signed certificate.",
 			},
-			"username": &schema.Schema{
+			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_USERNAME", nil),
 				Description: "Username to authenticate to Jenkins.",
 			},
-			"password": &schema.Schema{
+			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_PASSWORD", nil),

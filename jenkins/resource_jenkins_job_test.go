@@ -2,12 +2,13 @@ package jenkins
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccJenkinsJob_basic(t *testing.T) {
@@ -43,10 +44,13 @@ func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
 }
 
 func testAccJenkinsJobConfig(randString string) string {
+	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
 	return fmt.Sprintf(`
 resource jenkins_job foo {
   name = "tf-acc-test-%s"
-  template = file("resource_jenkins_job_test.xml")
+  template = <<EOT
+`+string(xml)+`
+EOT
 
   parameters = {
 	  description = "Acceptance testing Jenkins provider"
