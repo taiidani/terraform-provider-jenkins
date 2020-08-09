@@ -1,27 +1,30 @@
 package jenkins
 
 import (
+	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceJenkinsJob() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceJenkinsJobCreate,
-		Read:   resourceJenkinsJobRead,
-		Update: resourceJenkinsJobUpdate,
-		Delete: resourceJenkinsJobDelete,
-		Exists: resourceJenkinsJobExists,
+		CreateContext: resourceJenkinsJobCreate,
+		ReadContext:   resourceJenkinsJobRead,
+		UpdateContext: resourceJenkinsJobUpdate,
+		DeleteContext: resourceJenkinsJobDelete,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Description: "The unique name of the JenkinsCI job. Folders may be specified as foldername/name.",
 				Required:    true,
 				ForceNew:    true,
 			},
-			"template": &schema.Schema{
+			"template": {
 				Type:             schema.TypeString,
 				Description:      "The configuration file template, used to communicate with Jenkins.",
 				Required:         true,
@@ -37,71 +40,58 @@ func resourceJenkinsJob() *schema.Resource {
 	}
 }
 
-func resourceJenkinsJobExists(d *schema.ResourceData, meta interface{}) (b bool, e error) {
-	client := meta.(*jenkins.Jenkins)
-	name := d.Id()
-
-	log.Printf("[DEBUG] jenkins::exists - Checking if job %q exists", name)
-
-	_, err := client.GetJob(name)
-	if err != nil {
-		log.Printf("[DEBUG] jenkins::exists - Job %q does not exist: %v", name, err)
-		d.SetId("")
-		return false, nil
-	}
-
-	log.Printf("[DEBUG] jenkins::exists - Job %q exists", name)
-	return true, nil
-}
-
-func resourceJenkinsJobCreate(d *schema.ResourceData, meta interface{}) (err error) {
+func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*jenkins.Jenkins)
 	name := formatJobName(d.Get("name").(string))
 	baseName, folders := parseJobName(d.Get("name").(string))
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::create - Error binding config.xml template to %q: %v", name, err)
-		return err
+		return diag.FromErr(fmt.Errorf("jenkins::create - Error binding config.xml template to %q: %w", name, err))
 	}
 
 	_, err = client.CreateJobInFolder(xml, baseName, folders...)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::create - Error creating job for %q: %v", name, err)
-		return err
+		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q: %w", name, err))
 	}
 
 	log.Printf("[DEBUG] jenkins::create - job %q created", name)
 	d.SetId(name)
 
-	return resourceJenkinsJobRead(d, meta)
+	return resourceJenkinsJobRead(ctx, d, meta)
 }
 
-func resourceJenkinsJobRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*jenkins.Jenkins)
+func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(jenkinsClient)
 	name := d.Id()
 
 	log.Printf("[DEBUG] jenkins::read - Looking for job %q", name)
 
 	job, err := client.GetJob(name)
 	if err != nil {
-		log.Printf("[DEBUG] jenkins::read - Job %q does not exist: %v", name, err)
-		return err
+		if strings.HasPrefix(err.Error(), "404") {
+			// Job does not exist
+			d.SetId("")
+			return nil
+		}
+
+		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q does not exist: %w", name, err))
 	}
 
 	config, err := job.GetConfig()
 	if err != nil {
-		log.Printf("[DEBUG] jenkins::read - Job %q could not extract configuration: %v", name, err)
-		return err
+		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q could not extract configuration: %v", name, err))
 	}
 
 	log.Printf("[DEBUG] jenkins::read - Job %q exists", name)
-	d.Set("template", config)
+	if err := d.Set("template", config); err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
 }
 
-func resourceJenkinsJobUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*jenkins.Jenkins)
 	name := d.Id()
 
@@ -110,27 +100,28 @@ func resourceJenkinsJobUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::update - Error binding config.xml template to %q: %v", name, err)
-		return err
+		return diag.FromErr(fmt.Errorf("jenkins::update - Error binding config.xml template to %q: %w", name, err))
 	}
 
 	err = job.UpdateConfig(xml)
 	if err != nil {
-		log.Printf("[ERROR] jenkins::update - Error updating job %q configuration: %v", name, err)
-		return err
+		return diag.FromErr(fmt.Errorf("jenkins::update - Error updating job %q configuration: %w", name, err))
 	}
 
-	return resourceJenkinsJobRead(d, meta)
+	return resourceJenkinsJobRead(ctx, d, meta)
 }
 
-func resourceJenkinsJobDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*jenkins.Jenkins)
+func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(jenkinsClient)
 	name := d.Id()
 
 	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)
 
 	ok, err := client.DeleteJob(name)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	log.Printf("[DEBUG] jenkins::delete - %q removed: %t", name, ok)
-	return err
+	return nil
 }

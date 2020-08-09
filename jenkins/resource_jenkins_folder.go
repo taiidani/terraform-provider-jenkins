@@ -1,7 +1,7 @@
 package jenkins
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 const resourceJenkinsFolderTmpl = `<com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.6">
@@ -21,13 +21,12 @@ const resourceJenkinsFolderTmpl = `<com.cloudbees.hudson.plugins.folder.Folder p
 
 func resourceJenkinsFolder() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceJenkinsJobCreate,
-		Read:   resourceJenkinsJobRead,
-		Update: resourceJenkinsJobUpdate,
-		Delete: resourceJenkinsJobDelete,
-		Exists: resourceJenkinsJobExists,
+		CreateContext: resourceJenkinsJobCreate,
+		ReadContext:   resourceJenkinsJobRead,
+		UpdateContext: resourceJenkinsJobUpdate,
+		DeleteContext: resourceJenkinsJobDelete,
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Description: "The unique name of the JenkinsCI folder. Subfolders may be specified as foldername/name.",
 				Required:    true,
@@ -46,7 +45,7 @@ func resourceJenkinsFolder() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"template": &schema.Schema{
+			"template": {
 				Type:             schema.TypeString,
 				Description:      "The configuration file template, used to communicate with Jenkins.",
 				Optional:         true,
