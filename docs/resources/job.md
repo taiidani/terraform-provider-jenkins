@@ -1,7 +1,4 @@
----
----
-
-# jenkins_job
+# jenkins_job Resource
 
 Manages a job within Jenkins.
 

@@ -1,9 +1,8 @@
----
----
+# jenkins_folder Resource
 
-# jenkins_folder
+Manages a folder within Jenkins.
 
-Manages a folder within Jenkins. The Jenkins installation that uses this resource is expected to have the [Cloudbees Folders Plugin](https://plugins.jenkins.io/cloudbees-folder) installed in their system.
+~> The Jenkins installation that uses this resource is expected to have the [Cloudbees Folders Plugin](https://plugins.jenkins.io/cloudbees-folder) installed in their system.
 
 ## Example Usage
 
@@ -12,7 +11,7 @@ resource jenkins_folder example {
     name = "folder-name"
 }
 
-resource jenkins_folder example-child {
+resource jenkins_folder example_child {
     name = "${jenkins_folder.example.name}/child-name"
 }
 ```

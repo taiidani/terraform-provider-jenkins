@@ -1,15 +1,6 @@
----
-title: "Home"
-description: |-
-  The Jenkins provider is used to interact with the Jenkins API. The provider needs to be configured with the proper credentials before it can be used.
----
+# Jenkins Provider
 
 The Jenkins provider is used to interact with the Jenkins API. The provider needs to be configured with the proper credentials before it can be used.
-
-## Available Resources
-
-* [jenkins_folder](resource_jenkins_folder.md)
-* [jenkins_job](resource_jenkins_job.md)
 
 ## Example Usage
 
