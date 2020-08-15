@@ -22,7 +22,7 @@ jobs:
 
     - name: Set up services
       env:
-        COMPOSE_FILE: ./.github/workflows/acceptance/docker-compose.yml
+        COMPOSE_FILE: ./examples/docker-compose.yml
       run: |
         docker-compose build
         docker-compose up -d --force-recreate jenkins
