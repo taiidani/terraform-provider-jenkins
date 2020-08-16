@@ -1,7 +1,7 @@
 resource jenkins_folder example {
-    name = "folder-name"
-    description = "A sample folder"
-    template = <<EOT
+  name        = "folder-name"
+  description = "A sample folder"
+  template    = <<EOT
 <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.6">
     <actions/>
     <description>{{ .Description }}</description>
@@ -16,6 +16,10 @@ resource jenkins_folder example {
     <icon class="com.cloudbees.hudson.plugins.folder.icons.StockFolderIcon"/>
 </com.cloudbees.hudson.plugins.folder.Folder>
 EOT
+
+  lifecycle {
+    ignore_changes = [template]
+  }
 }
 
 resource jenkins_job pipeline {

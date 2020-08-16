@@ -31,7 +31,7 @@ func TestAccJenkinsJob_basic(t *testing.T) {
 }
 
 func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*jenkins.Jenkins)
+	client := testAccProvider.Meta().(jenkinsClient)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_job" {
