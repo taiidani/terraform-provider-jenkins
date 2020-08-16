@@ -1,5 +1,5 @@
 BINARY=terraform-provider-jenkins
-export COMPOSE_FILE=./.github/workflows/acceptance/docker-compose.yml
+export COMPOSE_FILE=./example/docker-compose.yml
 
 default: build
 

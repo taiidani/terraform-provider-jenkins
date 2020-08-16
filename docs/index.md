@@ -7,9 +7,10 @@ The Jenkins provider is used to interact with the Jenkins API. The provider need
 ```hcl
 # Configure the Jenkins Provider
 provider jenkins {
-  server_url = "https://jenkins.url"
-  username   = "username"
-  password   = "password"
+  server_url = "https://jenkins.url" # Or use JENKINS_URL env var
+  username   = "username"            # Or use JENKINS_USERNAME env var
+  password   = "password"            # Or use JENKINS_PASSWORD env var
+  ca_cert = ""                       # Or use JENKINS_CA_CERT env var
 }
 
 # Create a Jenkins job
@@ -55,7 +56,7 @@ $ terraform plan
 
 ## Argument Reference
 
-In addition to [generic `provider` arguments](https://www.terraform.io/docs/configuration/providers.html) (e.g. `alias` and `version`), the following arguments are supported in the Jenkins  `provider` block:
+In addition to [generic `provider` arguments](https://www.terraform.io/docs/configuration/providers.html) (e.g. `alias` and `version`), the following arguments are supported in the Jenkins `provider` block:
 
 * `server_url` - (Required) This is the Jenkins server URL. It should be fully qualified (e.g. `https://...`) and point to the root of the Jenkins server location.
 
