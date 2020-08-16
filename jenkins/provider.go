@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,13 +51,21 @@ func Provider() *schema.Provider {
 func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		ServerURL: d.Get("server_url").(string),
-		CACert:    d.Get("ca_cert").(string),
 		Username:  d.Get("username").(string),
 		Password:  d.Get("password").(string),
 	}
 
-	client, err := newJenkinsClient(&config)
-	if err != nil {
+	// Read the certificate
+	var err error
+	if d.Get("ca_cert").(string) != "" {
+		config.CACert, err = os.Open(d.Get("ca_cert").(string))
+		if err != nil {
+			return nil, diag.Errorf("Unable to open certificate file %s: %s", d.Get("ca_cert").(string), err.Error())
+		}
+	}
+
+	client := newJenkinsClient(&config)
+	if _, err = client.Init(); err != nil {
 		return nil, diag.FromErr(err)
 	}
 
