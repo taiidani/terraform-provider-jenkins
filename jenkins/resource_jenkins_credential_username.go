@@ -3,9 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
-	"time"
 
 	jenkins "github.com/bndr/gojenkins"
 	"github.com/hashicorp/go-cty/cty"
@@ -25,6 +23,12 @@ func resourceJenkinsCredentialUsername() *schema.Resource {
 			StateContext: resourceJenkinsCredentialUsernameImport,
 		},
 		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Description: "The identifier assigned to the credentials.",
+				Required:    true,
+				ForceNew:    true,
+			},
 			"domain": {
 				Type:        schema.TypeString,
 				Description: "The domain namespace that the credentials will be added to.",
@@ -67,24 +71,12 @@ func resourceJenkinsCredentialUsername() *schema.Resource {
 	}
 }
 
-func validateCredentialScope(v interface{}, p cty.Path) diag.Diagnostics {
-	for _, supported := range supportedCredentialScopes {
-		if v == supported {
-			return nil
-		}
-	}
-	return diag.Errorf("Invalid scope: %s. Supported scopes are: %s", v, strings.Join(supportedCredentialScopes, ", "))
-}
-
 func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = d.Get("folder").(string)
 
-	// Generate a unique ID for the new credentials
-	id := fmt.Sprintf("terraform-%s-%d", d.Get("username").(string), time.Now().Unix())
-
 	cred := jenkins.UsernameCredentials{
-		ID:          id,
+		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
 		Username:    d.Get("username").(string),
@@ -94,25 +86,21 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 	domain := d.Get("domain").(string)
 	err := cm.Add(domain, cred)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating username credentials for %q: %w", id, err))
+		return diag.Errorf("Could not create username credentials: %s", err)
 	}
 
-	log.Printf("[DEBUG] jenkins::create - username credentials %q created", id)
-	d.SetId(id)
-
+	d.SetId(generateCredentialID(cm.Folder, cred.ID))
 	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
 }
 
 func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	log.Printf("[DEBUG] jenkins::read - Looking for job %q", d.Id())
-
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = d.Get("folder").(string)
 
 	cred := jenkins.UsernameCredentials{}
 	err := cm.GetSingle(
 		d.Get("domain").(string),
-		d.Id(),
+		d.Get("name").(string),
 		&cred,
 	)
 
@@ -123,16 +111,16 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 			return nil
 		}
 
-		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q request error: %w", d.Id(), err))
+		return diag.Errorf("Could not read username credentials: %s", err)
 	}
 
-	d.SetId(cred.ID)
+	d.SetId(generateCredentialID(cm.Folder, cred.ID))
 	d.Set("scope", cred.Scope)
 	d.Set("description", cred.Description)
 	d.Set("username", cred.Username)
-
 	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
-	// Password only applies to Create operations
+	// Password only applies to Create/Update operations if the "password" property is non-empty
+
 	return nil
 }
 
@@ -142,7 +130,7 @@ func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.Reso
 
 	domain := d.Get("domain").(string)
 	cred := jenkins.UsernameCredentials{
-		ID:          d.Id(),
+		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
 		Username:    d.Get("username").(string),
@@ -153,12 +141,12 @@ func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.Reso
 		cred.Password = d.Get("password").(string)
 	}
 
-	err := cm.Update(domain, d.Id(), &cred)
+	err := cm.Update(domain, d.Get("name").(string), &cred)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::update - Error updating username credentials for %q: %w", d.Id(), err))
+		return diag.Errorf("Could not update username credentials: %s", err)
 	}
 
-	log.Printf("[DEBUG] jenkins::update - username credentials %q updated", d.Id())
+	d.SetId(generateCredentialID(cm.Folder, cred.ID))
 	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
 }
 
@@ -166,17 +154,14 @@ func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.Reso
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = d.Get("folder").(string)
 
-	log.Printf("[DEBUG] jenkins::delete - Removing %q", d.Id())
-
 	err := cm.Delete(
 		d.Get("domain").(string),
-		d.Id(),
+		d.Get("name").(string),
 	)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] jenkins::delete - %q removed", d.Id())
 	return nil
 }
 
@@ -185,11 +170,31 @@ func resourceJenkinsCredentialUsernameImport(ctx context.Context, d *schema.Reso
 
 	splitID := strings.Split(d.Id(), "/")
 	if len(splitID) < 2 {
-		return ret, fmt.Errorf("Import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<id>\"")
+		return ret, fmt.Errorf("Import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
 	}
 
-	d.SetId(splitID[len(splitID)-1])
-	d.Set("domain", splitID[len(splitID)-2])
-	d.Set("folder", strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/"))
+	name := splitID[len(splitID)-1]
+	d.Set("name", name)
+
+	domain := splitID[len(splitID)-2]
+	d.Set("domain", domain)
+
+	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
+	d.Set("folder", folder)
+
+	d.SetId(generateCredentialID(folder, name))
 	return ret, nil
+}
+
+func validateCredentialScope(v interface{}, p cty.Path) diag.Diagnostics {
+	for _, supported := range supportedCredentialScopes {
+		if v == supported {
+			return nil
+		}
+	}
+	return diag.Errorf("Invalid scope: %s. Supported scopes are: %s", v, strings.Join(supportedCredentialScopes, ", "))
+}
+
+func generateCredentialID(folder, name string) string {
+	return fmt.Sprintf("%s/%s", folder, name)
 }
