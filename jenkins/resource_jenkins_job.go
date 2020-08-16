@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	jenkins "github.com/bndr/gojenkins"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -41,7 +40,7 @@ func resourceJenkinsJob() *schema.Resource {
 }
 
 func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*jenkins.Jenkins)
+	client := meta.(jenkinsClient)
 	name := formatJobName(d.Get("name").(string))
 	baseName, folders := parseJobName(d.Get("name").(string))
 
@@ -92,7 +91,7 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*jenkins.Jenkins)
+	client := meta.(jenkinsClient)
 	name := d.Id()
 
 	// grab job by current name

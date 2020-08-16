@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	jenkins "github.com/bndr/gojenkins"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -26,7 +25,7 @@ func TestAccJenkinsFolder_basic(t *testing.T) {
 }
 
 func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(*jenkins.Jenkins)
+	client := testAccProvider.Meta().(jenkinsClient)
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_folder" {
