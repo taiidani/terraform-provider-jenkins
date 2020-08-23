@@ -72,8 +72,16 @@ func resourceJenkinsCredentialUsername() *schema.Resource {
 }
 
 func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
+	client := meta.(jenkinsClient)
+	cm := client.Credentials()
+
+	// Validate that the folder exists
 	cm.Folder = d.Get("folder").(string)
+	if cm.Folder != "" {
+		if _, err := client.GetJob(formatJobName(cm.Folder)); err != nil {
+			return diag.Errorf("Invalid folder name '%s' specified: %s", cm.Folder, err)
+		}
+	}
 
 	cred := jenkins.UsernameCredentials{
 		ID:          d.Get("name").(string),

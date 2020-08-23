@@ -1,6 +1,7 @@
 resource jenkins_credential_username global {
   name     = "global-username"
   username = "foo"
+  # Passwords may be unmanaged
   # password = "barsoom"
 }
 
