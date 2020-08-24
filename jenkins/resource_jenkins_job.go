@@ -16,6 +16,9 @@ func resourceJenkinsJob() *schema.Resource {
 		ReadContext:   resourceJenkinsJobRead,
 		UpdateContext: resourceJenkinsJobUpdate,
 		DeleteContext: resourceJenkinsJobDelete,
+		Importer: &schema.ResourceImporter {
+			StateContext: resourceJenkinsJobImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -123,4 +126,19 @@ func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[DEBUG] jenkins::delete - %q removed: %t", name, ok)
 	return nil
+}
+
+func resourceJenkinsJobImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+        name := d.Id()
+	
+	d.Set("name", name)
+        d.Set("parameters", map[string]string{}) // Set empty params map
+	
+	xml, err := renderTemplate(d.Get("template").(string), d)
+	if err != nil {
+		return nil, fmt.Errorf("jenkins::import - Error binding config.xml template to %q: %w", name, err)
+	}
+	
+	d.Set("template", cleanXML(xml)) //Sanitize template before importing
+        return []*schema.ResourceData{d}, nil
 }
