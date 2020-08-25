@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"html"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -86,7 +87,7 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] jenkins::read - Job %q exists", name)
-	if err := d.Set("template", config); err != nil {
+	if err := d.Set("template", html.UnescapeString(config)); err != nil {
 		return diag.FromErr(err)
 	}
 
@@ -131,14 +132,10 @@ func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta 
 func resourceJenkinsJobImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
         name := d.Id()
 	
+	log.Printf("[DEBUG] jenkins::import - Importing job %q", name)
+	
 	d.Set("name", name)
         d.Set("parameters", map[string]string{}) // Set empty params map
 	
-	xml, err := renderTemplate(d.Get("template").(string), d)
-	if err != nil {
-		return nil, fmt.Errorf("jenkins::import - Error binding config.xml template to %q: %w", name, err)
-	}
-	
-	d.Set("template", cleanXML(xml)) //Sanitize template before importing
         return []*schema.ResourceData{d}, nil
 }

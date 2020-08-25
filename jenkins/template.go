@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"bytes"
+	"html"
 	"html/template"
 	"log"
 
@@ -58,6 +59,7 @@ func renderTemplate(data string, d *schema.ResourceData) (string, error) {
 	}
 
 	xml := buffer.String()
+	xml = html.UnescapeString(xml)
 	log.Printf("[DEBUG] jenkins::xml - Bound template:\n%s", xml)
 	return xml, nil
 }
