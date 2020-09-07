@@ -130,7 +130,7 @@ func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceJenkinsJobImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-        name := d.Id()
+        name := formatJobName(d.Id())
 	
 	log.Printf("[DEBUG] jenkins::import - Importing job %q", name)
 	
