@@ -78,7 +78,7 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 	// Validate that the folder exists
 	cm.Folder = d.Get("folder").(string)
 	if cm.Folder != "" {
-		if _, err := client.GetJob(formatJobName(cm.Folder)); err != nil {
+		if _, err := client.GetJob(cm.Folder); err != nil {
 			return diag.Errorf("Invalid folder name '%s' specified: %s", cm.Folder, err)
 		}
 	}
