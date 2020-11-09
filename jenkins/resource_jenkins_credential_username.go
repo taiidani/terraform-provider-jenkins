@@ -76,10 +76,10 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 	cm := client.Credentials()
 
 	// Validate that the folder exists
-	cm.Folder = d.Get("folder").(string)
+	cm.Folder = formatJobName(d.Get("folder").(string))
 	if cm.Folder != "" {
-		if _, err := client.GetJob(cm.Folder); err != nil {
-			return diag.Errorf("Invalid folder name '%s' specified: %s", cm.Folder, err)
+		if _, err := client.GetJob(formatJobName(cm.Folder)); err != nil {
+			return diag.Errorf("Invalid folder name '%s' specified: %s", formatJobName(cm.Folder), err)
 		}
 	}
 
@@ -97,13 +97,13 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 		return diag.Errorf("Could not create username credentials: %s", err)
 	}
 
-	d.SetId(generateCredentialID(cm.Folder, cred.ID))
+	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
 }
 
 func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = d.Get("folder").(string)
+	cm.Folder = formatJobName(d.Get("folder").(string))
 
 	cred := jenkins.UsernameCredentials{}
 	err := cm.GetSingle(
@@ -122,7 +122,7 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 		return diag.Errorf("Could not read username credentials: %s", err)
 	}
 
-	d.SetId(generateCredentialID(cm.Folder, cred.ID))
+	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	d.Set("scope", cred.Scope)
 	d.Set("description", cred.Description)
 	d.Set("username", cred.Username)
@@ -134,7 +134,7 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 
 func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = d.Get("folder").(string)
+	cm.Folder = formatJobName(d.Get("folder").(string))
 
 	domain := d.Get("domain").(string)
 	cred := jenkins.UsernameCredentials{
@@ -154,13 +154,13 @@ func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.Reso
 		return diag.Errorf("Could not update username credentials: %s", err)
 	}
 
-	d.SetId(generateCredentialID(cm.Folder, cred.ID))
+	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
 }
 
 func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = d.Get("folder").(string)
+	cm.Folder = formatJobName(d.Get("folder").(string))
 
 	err := cm.Delete(
 		d.Get("domain").(string),
