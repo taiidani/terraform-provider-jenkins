@@ -7,9 +7,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+// formatJobName will format a folder name in the way that Jenkins expects, with "name/job/name" separators.
+// Deduplication will be performed so that it is safe to pass an already-formatted job into this function.
 func formatJobName(name string) string {
 	split := strings.Split(name, "/")
-	return strings.Join(split, "/job/")
+
+	ret := []string{}
+	for _, segment := range split {
+		if segment == "job" {
+			continue
+		}
+		ret = append(ret, segment)
+	}
+	return strings.Join(ret, "/job/")
 }
 
 func parseJobName(name string) (job string, folders []string) {

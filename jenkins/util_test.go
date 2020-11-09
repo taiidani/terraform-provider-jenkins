@@ -5,7 +5,7 @@ import (
 )
 
 func TestFormatJobName(t *testing.T) {
-	inputSimple, inputFolder, inputNested := "job-name", "folder/job-name", "parent/child/job-name"
+	inputSimple, inputFolder, inputNested, inputDuped := "job-name", "folder/job-name", "parent/child/job-name", "parent/job/child/job/job-name"
 
 	// Simple
 	actual := formatJobName(inputSimple)
@@ -16,13 +16,19 @@ func TestFormatJobName(t *testing.T) {
 	// Folder
 	actual = formatJobName(inputFolder)
 	if actual != "folder/job/job-name" {
-		t.Errorf("Expected %s but received %s", inputSimple, actual)
+		t.Errorf("Expected %s but received %s", inputFolder, actual)
 	}
 
 	// Nested
 	actual = formatJobName(inputNested)
 	if actual != "parent/job/child/job/job-name" {
-		t.Errorf("Expected %s but received %s", inputSimple, actual)
+		t.Errorf("Expected %s but received %s", inputNested, actual)
+	}
+
+	// Deduplicate
+	actual = formatJobName(inputDuped)
+	if actual != "parent/job/child/job/job-name" {
+		t.Errorf("Expected %s but received %s", inputDuped, actual)
 	}
 }
 
