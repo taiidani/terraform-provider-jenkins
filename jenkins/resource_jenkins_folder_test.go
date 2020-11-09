@@ -24,6 +24,30 @@ func TestAccJenkinsFolder_basic(t *testing.T) {
 	})
 }
 
+func TestAccJenkinsFolder_nested(t *testing.T) {
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+					name = "tf-acc-test-%s"
+					description = "Terraform acceptance tests %s"
+				}
+
+				resource jenkins_folder sub {
+					name = "${jenkins_folder.foo.name}/subfolder"
+					description = "Terraform acceptance tests ${jenkins_folder.foo.name}"
+				}`, randString, randString),
+			},
+		},
+	})
+}
+
 func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(jenkinsClient)
 
