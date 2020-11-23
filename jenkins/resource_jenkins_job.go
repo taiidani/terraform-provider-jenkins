@@ -18,10 +18,18 @@ func resourceJenkinsJob() *schema.Resource {
 		DeleteContext: resourceJenkinsJobDelete,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:        schema.TypeString,
-				Description: "The unique name of the JenkinsCI job. Folders may be specified as foldername/name.",
-				Required:    true,
-				ForceNew:    true,
+				Type:             schema.TypeString,
+				Description:      "The unique name of the JenkinsCI job.",
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateJobName,
+			},
+			"folder": {
+				Type:             schema.TypeString,
+				Description:      "The folder namespace that the job will be added to.",
+				Optional:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateFolderName,
 			},
 			"template": {
 				Type:             schema.TypeString,
@@ -41,32 +49,38 @@ func resourceJenkinsJob() *schema.Resource {
 
 func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
-	name := formatJobName(d.Get("name").(string))
-	baseName, folders := parseJobName(d.Get("name").(string))
+	name := d.Get("name").(string)
+	folder := formatFolderName(d.Get("folder").(string))
+
+	// Validate that the folder exists
+	if err := folderExists(client, folder); err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::create - Could not find folder '%s': %w", folder, err))
+	}
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::create - Error binding config.xml template to %q: %w", name, err))
 	}
 
-	_, err = client.CreateJobInFolder(xml, baseName, folders...)
+	folders := extractFolders(folder)
+	_, err = client.CreateJobInFolder(xml, name, folders...)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q: %w", name, err))
+		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q in folder %s: %w", name, folder, err))
 	}
 
-	log.Printf("[DEBUG] jenkins::create - job %q created", name)
-	d.SetId(name)
+	log.Printf("[DEBUG] jenkins::create - job %q created in folder %s", name, folder)
+	d.SetId(formatFolderName(folder + "/" + name))
 
 	return resourceJenkinsJobRead(ctx, d, meta)
 }
 
 func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
-	name := d.Id()
+	name, folders := parseCanonicalJobID(d.Id())
 
 	log.Printf("[DEBUG] jenkins::read - Looking for job %q", name)
 
-	job, err := client.GetJob(name)
+	job, err := client.GetJob(name, folders...)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "404") {
 			// Job does not exist
@@ -79,10 +93,11 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	config, err := job.GetConfig()
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q could not extract configuration: %v", name, err))
+		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q could not extract configuration: %v", job.Base, err))
 	}
 
-	log.Printf("[DEBUG] jenkins::read - Job %q exists", name)
+	log.Printf("[DEBUG] jenkins::read - Job %q exists", job.Base)
+	d.SetId(job.Base)
 	if err := d.Set("template", config); err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,10 +107,10 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 
 func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
-	name := d.Id()
+	name, folders := parseCanonicalJobID(d.Id())
 
 	// grab job by current name
-	job, err := client.GetJob(name)
+	job, err := client.GetJob(name, folders...)
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
@@ -112,11 +127,11 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
-	name := d.Id()
+	name, folders := parseCanonicalJobID(d.Id())
 
 	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)
 
-	ok, err := client.DeleteJob(name)
+	ok, err := client.DeleteJobInFolder(name, folders...)
 	if err != nil {
 		return diag.FromErr(err)
 	}

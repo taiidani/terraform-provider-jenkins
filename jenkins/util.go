@@ -7,14 +7,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// formatJobName will format a folder name in the way that Jenkins expects, with "name/job/name" separators.
+// formatFolderName will format a folder name in the way that Jenkins expects, with "name/job/name" separators.
 // Deduplication will be performed so that it is safe to pass an already-formatted job into this function.
-func formatJobName(name string) string {
+func formatFolderName(name string) string {
 	split := strings.Split(name, "/")
 
 	ret := []string{}
 	for _, segment := range split {
-		if segment == "job" {
+		if segment == "" || segment == "job" {
 			continue
 		}
 		ret = append(ret, segment)
@@ -22,9 +22,46 @@ func formatJobName(name string) string {
 	return strings.Join(ret, "/job/")
 }
 
-func parseJobName(name string) (job string, folders []string) {
-	split := strings.Split(name, "/")
-	return split[len(split)-1], split[0 : len(split)-1]
+// extractFolders prepares a job name for some folder-aware client library calls.
+// These calls are different from other calls in that they expect the folders to be specified
+// as a series of parameters with no "/job/" separators.
+//
+// This func will strip out the "/job/" separators from the given string and only return
+// the apparent "path" to the folder.
+func extractFolders(folder string) (folders []string) {
+	for _, item := range strings.Split(folder, "/") {
+		if item == "" || item == "job" {
+			continue
+		}
+		folders = append(folders, item)
+	}
+
+	return
+}
+
+// parseCanonicalJobID will take a canonical Jenkins ID and extract out the base name of the job
+// as well as the folder segments that are part of it.
+func parseCanonicalJobID(id string) (name string, folders []string) {
+	if id == "" {
+		return
+	}
+
+	folders = extractFolders(id)
+	return folders[len(folders)-1], folders[0 : len(folders)-1]
+}
+
+// folderExists will validate that a given folder name exists
+func folderExists(client jenkinsClient, name string) error {
+	folders := extractFolders(name)
+	if len(folders) > 0 {
+		folderName, parentFolders := parseCanonicalJobID(name)
+		_, err := client.GetFolder(folderName, parentFolders...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func templateDiff(k, old, new string, d *schema.ResourceData) bool {

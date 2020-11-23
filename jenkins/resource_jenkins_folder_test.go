@@ -18,7 +18,15 @@ func TestAccJenkinsFolder_basic(t *testing.T) {
 		CheckDestroy: testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccJenkinsFolderConfig(randString),
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+				  name = "tf-acc-test-%s"
+				  description = "Terraform acceptance tests %s"
+				}`, randString, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
+				),
 			},
 		},
 	})
@@ -40,9 +48,17 @@ func TestAccJenkinsFolder_nested(t *testing.T) {
 				}
 
 				resource jenkins_folder sub {
-					name = "${jenkins_folder.foo.name}/subfolder"
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
 					description = "Terraform acceptance tests ${jenkins_folder.foo.name}"
 				}`, randString, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
+					resource.TestCheckResourceAttr("jenkins_folder.sub", "name", "subfolder"),
+					resource.TestCheckResourceAttr("jenkins_folder.sub", "folder", "/job/tf-acc-test-"+randString),
+				),
 			},
 		},
 	})
@@ -63,13 +79,4 @@ func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func testAccJenkinsFolderConfig(randString string) string {
-	return fmt.Sprintf(`
-resource jenkins_folder foo {
-  name = "tf-acc-test-%s"
-  description = "Terraform acceptance tests %s"
-}
-`, randString, randString)
 }

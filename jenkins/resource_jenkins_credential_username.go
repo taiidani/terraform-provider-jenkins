@@ -74,13 +74,11 @@ func resourceJenkinsCredentialUsername() *schema.Resource {
 func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
 	cm := client.Credentials()
+	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	// Validate that the folder exists
-	cm.Folder = formatJobName(d.Get("folder").(string))
-	if cm.Folder != "" {
-		if _, err := client.GetJob(formatJobName(cm.Folder)); err != nil {
-			return diag.Errorf("Invalid folder name '%s' specified: %s", formatJobName(cm.Folder), err)
-		}
+	if err := folderExists(client, cm.Folder); err != nil {
+		return diag.FromErr(fmt.Errorf("Invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
 	cred := jenkins.UsernameCredentials{
@@ -103,7 +101,7 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 
 func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatJobName(d.Get("folder").(string))
+	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	cred := jenkins.UsernameCredentials{}
 	err := cm.GetSingle(
@@ -134,7 +132,7 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 
 func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatJobName(d.Get("folder").(string))
+	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	domain := d.Get("domain").(string)
 	cred := jenkins.UsernameCredentials{
@@ -160,7 +158,7 @@ func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.Reso
 
 func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatJobName(d.Get("folder").(string))
+	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	err := cm.Delete(
 		d.Get("domain").(string),

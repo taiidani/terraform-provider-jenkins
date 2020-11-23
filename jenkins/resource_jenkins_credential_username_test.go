@@ -73,7 +73,8 @@ func TestAccJenkinsCredentialUsername_folder(t *testing.T) {
 				}
 
 				resource jenkins_folder foo_sub {
-					name = "${jenkins_folder.foo.name}/subfolder"
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
 					description = "Terraform acceptance testing"
 
 					lifecycle {
@@ -83,12 +84,12 @@ func TestAccJenkinsCredentialUsername_folder(t *testing.T) {
 
 				resource jenkins_credential_username foo {
 				  name = "test-username"
-				  folder = jenkins_folder.foo_sub.name
+				  folder = jenkins_folder.foo_sub.id
 				  username = "foo"
 				  password = "bar"
 				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("jenkins_credential_username.foo", "id", "tf-acc-test-"+randString+"/subfolder/test-username"),
+					resource.TestCheckResourceAttr("jenkins_credential_username.foo", "id", "/job/tf-acc-test-"+randString+"/job/subfolder/test-username"),
 					testAccCheckJenkinsCredentialUsernameExists("jenkins_credential_username.foo", &cred),
 				),
 			},
@@ -105,7 +106,8 @@ func TestAccJenkinsCredentialUsername_folder(t *testing.T) {
 				}
 
 				resource jenkins_folder foo_sub {
-					name = "${jenkins_folder.foo.name}/subfolder"
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
 					description = "Terraform acceptance testing"
 
 					lifecycle {
@@ -115,7 +117,7 @@ func TestAccJenkinsCredentialUsername_folder(t *testing.T) {
 
 				resource jenkins_credential_username foo {
 				  name = "test-username"
-				  folder = jenkins_folder.foo_sub.name
+				  folder = jenkins_folder.foo_sub.id
 				  description = "new-description"
 				  username = "foo"
 				  password = "bar"
@@ -143,7 +145,7 @@ func testAccCheckJenkinsCredentialUsernameExists(resourceName string, cred *jenk
 		}
 
 		manager := client.Credentials()
-		manager.Folder = formatJobName(rs.Primary.Attributes["folder"])
+		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
 		err := manager.GetSingle(rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
 			return fmt.Errorf("Unable to retrieve credentials for %s - %s: %w", rs.Primary.Attributes["folder"], rs.Primary.Attributes["name"], err)
@@ -163,7 +165,7 @@ func testAccCheckJenkinsCredentialUsernameDestroy(s *terraform.State) error {
 
 		cred := jenkins.UsernameCredentials{}
 		manager := client.Credentials()
-		manager.Folder = formatJobName(rs.Primary.Meta["folder"].(string))
+		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {
 			return fmt.Errorf("Credentials still exists: %s - %s", rs.Primary.Attributes["folder"], rs.Primary.Attributes["name"])
