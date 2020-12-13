@@ -12,7 +12,6 @@ import (
 
 func TestAccJenkinsCredentialUsername_basic(t *testing.T) {
 	var cred jenkins.UsernameCredentials
-	// randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -160,6 +159,8 @@ func testAccCheckJenkinsCredentialUsernameDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_credential_username" {
+			continue
+		} else if _, ok := rs.Primary.Meta["name"]; !ok {
 			continue
 		}
 
