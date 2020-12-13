@@ -78,7 +78,7 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 
 	// Validate that the folder exists
 	if err := folderExists(client, cm.Folder); err != nil {
-		return diag.FromErr(fmt.Errorf("Invalid folder name '%s' specified: %w", cm.Folder, err))
+		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
 	cred := jenkins.UsernameCredentials{
@@ -176,7 +176,7 @@ func resourceJenkinsCredentialUsernameImport(ctx context.Context, d *schema.Reso
 
 	splitID := strings.Split(d.Id(), "/")
 	if len(splitID) < 2 {
-		return ret, fmt.Errorf("Import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
+		return ret, fmt.Errorf("import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
 	}
 
 	name := splitID[len(splitID)-1]

@@ -12,7 +12,6 @@ import (
 
 func TestAccJenkinsCredentialUsername_basic(t *testing.T) {
 	var cred jenkins.UsernameCredentials
-	// randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -20,12 +19,12 @@ func TestAccJenkinsCredentialUsername_basic(t *testing.T) {
 		CheckDestroy: testAccCheckJenkinsCredentialUsernameDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(`
+				Config: `
 				resource jenkins_credential_username foo {
 				  name = "test-username"
 				  username = "foo"
 				  password = "bar"
-				}`),
+				}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_username.foo", "id", "/test-username"),
 					testAccCheckJenkinsCredentialUsernameExists("jenkins_credential_username.foo", &cred),
@@ -33,13 +32,13 @@ func TestAccJenkinsCredentialUsername_basic(t *testing.T) {
 			},
 			{
 				// Update by adding description
-				Config: fmt.Sprintf(`
+				Config: `
 				resource jenkins_credential_username foo {
 				  name = "test-username"
 				  description = "new-description"
 				  username = "foo"
 				  password = "bar"
-				}`),
+				}`,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckJenkinsCredentialUsernameExists("jenkins_credential_username.foo", &cred),
 					resource.TestCheckResourceAttr("jenkins_credential_username.foo", "description", "new-description"),
@@ -160,6 +159,8 @@ func testAccCheckJenkinsCredentialUsernameDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_credential_username" {
+			continue
+		} else if _, ok := rs.Primary.Meta["name"]; !ok {
 			continue
 		}
 
