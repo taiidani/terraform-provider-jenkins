@@ -16,6 +16,7 @@ import (
 )
 
 func TestAccJenkinsJob_basic(t *testing.T) {
+	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
@@ -24,7 +25,60 @@ func TestAccJenkinsJob_basic(t *testing.T) {
 		CheckDestroy: testAccCheckJenkinsJobDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccJenkinsJobConfig(randString),
+				Config: fmt.Sprintf(`
+				resource jenkins_job foo {
+				  name = "tf-acc-test-%s"
+				  template = <<EOT
+				`+string(xml)+`
+				EOT
+
+				  parameters = {
+					  description = "Acceptance testing Jenkins provider"
+				  }
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "name", "tf-acc-test-"+randString),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsJob_nested(t *testing.T) {
+	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+					name = "tf-acc-test-%s"
+					description = "Terraform acceptance tests %s"
+				}
+
+				resource jenkins_job sub {
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
+					template = <<EOT
+				  `+string(xml)+`
+				  EOT
+
+					parameters = {
+						description = "Acceptance testing Jenkins provider"
+					}
+				}`, randString, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "name", "subfolder"),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "folder", "/job/tf-acc-test-"+randString),
+				),
 			},
 		},
 	})
@@ -47,23 +101,6 @@ func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccJenkinsJobConfig(randString string) string {
-	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
-	return fmt.Sprintf(`
-resource jenkins_job foo {
-  name = "tf-acc-test-%s"
-  template = <<EOT
-`+string(xml)+`
-EOT
-
-  parameters = {
-	  description = "Acceptance testing Jenkins provider"
-  }
-
-}
-`, randString)
-}
-
 func Test_resourceJenkinsJobDelete(t *testing.T) {
 	type args struct {
 		ctx  context.Context
@@ -79,7 +116,7 @@ func Test_resourceJenkinsJobDelete(t *testing.T) {
 			name: "success",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockDeleteJob: func(name string) (bool, error) {
+					mockDeleteJobInFolder: func(name string, parentIDs ...string) (bool, error) {
 						return true, nil
 					},
 				},
@@ -90,7 +127,7 @@ func Test_resourceJenkinsJobDelete(t *testing.T) {
 			name: "error",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockDeleteJob: func(name string) (bool, error) {
+					mockDeleteJobInFolder: func(name string, parentIDs ...string) (bool, error) {
 						return false, fmt.Errorf("omg")
 					},
 				},

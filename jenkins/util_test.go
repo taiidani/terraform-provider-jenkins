@@ -4,45 +4,51 @@ import (
 	"testing"
 )
 
-func TestFormatJobName(t *testing.T) {
-	inputSimple, inputFolder, inputNested := "job-name", "folder/job-name", "parent/child/job-name"
+func TestFormatFolderName(t *testing.T) {
+	inputSimple, inputFolder, inputNested, inputDuped := "job-name", "folder/job-name", "parent/child/job-name", "parent/job/child/job/job-name"
 
 	// Simple
-	actual := formatJobName(inputSimple)
+	actual := formatFolderName(inputSimple)
 	if actual != inputSimple {
 		t.Errorf("Expected %s but received %s", inputSimple, actual)
 	}
 
 	// Folder
-	actual = formatJobName(inputFolder)
+	actual = formatFolderName(inputFolder)
 	if actual != "folder/job/job-name" {
-		t.Errorf("Expected %s but received %s", inputSimple, actual)
+		t.Errorf("Expected %s but received %s", inputFolder, actual)
 	}
 
 	// Nested
-	actual = formatJobName(inputNested)
+	actual = formatFolderName(inputNested)
 	if actual != "parent/job/child/job/job-name" {
-		t.Errorf("Expected %s but received %s", inputSimple, actual)
+		t.Errorf("Expected %s but received %s", inputNested, actual)
+	}
+
+	// Deduplicate
+	actual = formatFolderName(inputDuped)
+	if actual != "parent/job/child/job/job-name" {
+		t.Errorf("Expected %s but received %s", inputDuped, actual)
 	}
 }
 
-func TestParseJobName(t *testing.T) {
+func TestParseCanonicalJobID(t *testing.T) {
 	inputSimple, inputFolder, inputNested := "job-name", "folder/job-name", "parent/child/job-name"
 
 	// Simple
-	actual, actualFolders := parseJobName(inputSimple)
+	actual, actualFolders := parseCanonicalJobID(inputSimple)
 	if actual != inputSimple || len(actualFolders) != 0 {
 		t.Errorf("Expected %s with empty folder array but received %s %s", inputSimple, actual, actualFolders)
 	}
 
 	// Folder
-	actual, actualFolders = parseJobName(inputFolder)
+	actual, actualFolders = parseCanonicalJobID(inputFolder)
 	if actual != inputSimple || len(actualFolders) != 1 || actualFolders[0] != "folder" {
 		t.Errorf("Expected %s with single folder array but received %s %s", inputSimple, actual, actualFolders)
 	}
 
 	// Nested
-	actual, actualFolders = parseJobName(inputNested)
+	actual, actualFolders = parseCanonicalJobID(inputNested)
 	if actual != inputSimple || len(actualFolders) != 2 || actualFolders[0] != "parent" || actualFolders[1] != "child" {
 		t.Errorf("Expected %s with double folder array but received %s %s", inputSimple, actual, actualFolders)
 	}

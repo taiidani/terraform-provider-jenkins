@@ -27,10 +27,18 @@ func resourceJenkinsFolder() *schema.Resource {
 		DeleteContext: resourceJenkinsJobDelete,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:        schema.TypeString,
-				Description: "The unique name of the JenkinsCI folder. Subfolders may be specified as foldername/name.",
-				Required:    true,
-				ForceNew:    true,
+				Type:             schema.TypeString,
+				Description:      "The unique name of the JenkinsCI folder.",
+				Required:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateJobName,
+			},
+			"folder": {
+				Type:             schema.TypeString,
+				Description:      "The folder namespace that the folder will be added to as a subfolder.",
+				Optional:         true,
+				ForceNew:         true,
+				ValidateDiagFunc: validateFolderName,
 			},
 			"description": {
 				Type:        schema.TypeString,
