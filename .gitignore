@@ -4,6 +4,7 @@ terraform.tfplan
 terraform.tfstate*
 ./*.tfstate
 .terraform/
+.terraform.lock.hcl
 *.test
 vendor
 dist/

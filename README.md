@@ -10,30 +10,21 @@
 
 This is a community provider and is not supported by Hashicorp.
 
-## Requirements
-
-- [Terraform](https://www.terraform.io/downloads.html) 0.12+
-- [Go](https://golang.org/doc/install) 1.11+ (to build the provider plugin)
-
 ## Installation
 
-Install the provider with:
-
-```bash
-go install github.com/taiidani/terraform-provider-jenkins
-```
-
-Then copy or link the resulting binary to your [terraform.d plugins folder](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins). On macOS this might look like:
-
-```bash
-ln -s "$(go env GOPATH)/bin/terraform-provider-jenkins" "$HOME/.terraform.d/plugins/terraform-provider-jenkins"
-```
+This provider has been published to the Terraform Registry at https://registry.terraform.io/providers/taiidani/jenkins. Please visit the registry for documentation and installation instructions.
 
 ## Developing the Provider
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+Working on this provider requires the following:
 
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+* [Terraform](https://www.terraform.io/downloads.html) 0.14+
+* [Go](http://www.golang.org) (version requirements documented in the `go.mod` file)
+* [Docker Engine](https://docs.docker.com/engine/install/) 20.10+ (for running acceptance tests)
+
+You will also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `${GOPATH}/bin` to your `$PATH`.
+
+To compile the provider, run `make`. This will install the provider into your GOPATH and print instructions on registering it into your system.
 
 In order to test the provider, you can simply run `make test`.
 

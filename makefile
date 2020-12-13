@@ -6,10 +6,16 @@ default: build
 # Builds the provider and adds it to your GOPATH/bin folder.
 build:
 	go install
-
-# Registers the built provider against the local Terraform plugins directory, enabling it for use by Terraform.
-install: build
-	ln -sf "$(shell go env GOPATH)/bin/$(BINARY)" "$$HOME/.terraform.d/plugins/$(BINARY)"
+	@echo "Binary has been compiled to $(shell go env GOPATH)/bin/${BINARY}"
+	@echo "In order to have Terraform pick this up you will need to add the following to your $$HOME/.terraformrc file:"
+	@echo "  provider_installation {"
+	@echo "    dev_overrides {"
+	@echo "      \"taiidani/jenkins\" = \"$(shell go env GOPATH)/bin\""
+	@echo "    }"
+	@echo "    direct {}"
+	@echo "  }"
+	@echo ""
+	@echo "This should only be used during development. See https://www.terraform.io/docs/commands/cli-config.html#development-overrides-for-provider-developers for details."
 
 # Executes all unit tests for the provider
 test:
@@ -25,5 +31,4 @@ testacc:
 
 # Cleans up any lingering items in your system created by this provider.
 clean:
-	rm -f "$$HOME/.terraform.d/plugins/$(BINARY)"
 	rm -f "$(shell go env GOPATH)/bin/$(BINARY)"

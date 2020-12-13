@@ -1,4 +1,4 @@
-resource jenkins_folder example {
+resource "jenkins_folder" "example" {
   name        = "folder-name"
   description = "A sample folder"
   template    = <<EOT
@@ -22,8 +22,9 @@ EOT
   }
 }
 
-resource jenkins_job pipeline {
-  name     = "${jenkins_folder.example.name}/pipeline"
+resource "jenkins_job" "pipeline" {
+  name     = "pipeline"
+  folder   = jenkins_folder.example.id
   template = file("${path.module}/pipeline.xml")
 
   parameters = {
@@ -31,8 +32,9 @@ resource jenkins_job pipeline {
   }
 }
 
-resource jenkins_job freestyle {
-  name     = "${jenkins_folder.example.name}/freestyle"
+resource "jenkins_job" "freestyle" {
+  name     = "freestyle"
+  folder   = jenkins_folder.example.id
   template = file("${path.module}/freestyle.xml")
 
   parameters = {
