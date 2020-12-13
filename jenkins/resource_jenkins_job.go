@@ -111,6 +111,9 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	// grab job by current name
 	job, err := client.GetJob(name, folders...)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::update - Could not find job %q: %w", name, err))
+	}
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
 	if err != nil {
