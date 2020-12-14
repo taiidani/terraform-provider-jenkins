@@ -48,56 +48,9 @@ func TestRenderTemplate(t *testing.T) {
 	}
 }
 
-func TestRenderTemplateFolder(t *testing.T) {
-	// Set up inputs
-	input := "<root>Test {{ .Description }}</root>"
-	expected := "<root>Test Case</root>"
-
-	// Set up Job
-	job := resourceJenkinsFolder()
-	d := job.TestResourceData()
-	d.Set("name", "Test Name")
-	d.Set("description", "Case")
-	d.Set("permissions", []string{"Test Permission"})
-
-	// Test simple
-	if actual, err := renderTemplate(input, d); err != nil {
-		t.Fatal(err)
-	} else if actual != expected {
-		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
-	}
-
-	// Now with a fully populated template
-	input = `<root>
-	<name>{{ .Name }}</name>
-	<description>{{ .Description }}</description>
-	<permissions>
-		{{ range $value := .Permissions -}}
-		<permission>{{ $value }}</permission>
-		{{- end }}
-	</permissions>
-</root>
-`
-
-	expected = `<root>
-	<name>Test Name</name>
-	<description>Case</description>
-	<permissions>
-		<permission>Test Permission</permission>
-	</permissions>
-</root>
-`
-
-	if actual, err := renderTemplate(input, d); err != nil {
-		t.Fatal(err)
-	} else if actual != expected {
-		t.Errorf("Expected %s to be considered equal to %s", actual, expected)
-	}
-}
-
 func TestRenderTemplateInvalid(t *testing.T) {
 	// Set up Job
-	job := resourceJenkinsFolder()
+	job := resourceJenkinsJob()
 	d := job.TestResourceData()
 	d.Set("name", "Test Name")
 
