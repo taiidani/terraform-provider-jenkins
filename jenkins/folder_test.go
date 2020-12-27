@@ -24,6 +24,13 @@ func Test_parseFolder(t *testing.T) {
   <actions/>
   <description>Example Description</description>
   <properties>
+    <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:anonymous</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:authenticated</permission>
+      <permission>hudson.model.Item.Cancel:authenticated</permission>
+      <permission>hudson.model.Item.Discover:anonymous</permission>
+    </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
     <org.jenkinsci.plugins.workflow.libs.FolderLibraries plugin="workflow-cps-global-lib@2.17">
       <libraries>
         <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
@@ -80,8 +87,23 @@ func Test_parseFolder(t *testing.T) {
 			want: &folder{
 				XMLName:     xml.Name{Local: "com.cloudbees.hudson.plugins.folder.Folder"},
 				Description: "Example Description",
-				Properties: xmlRawProperty{Raw: `
-    <org.jenkinsci.plugins.workflow.libs.FolderLibraries plugin="workflow-cps-global-lib@2.17">
+				Properties: folderProperties{
+					Security: &folderSecurity{
+						InheritanceStrategy: folderPermissionInheritanceStrategy{
+							Class: "org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy",
+						},
+						Permission: []string{
+							"com.cloudbees.plugins.credentials.CredentialsProvider.Create:anonymous",
+							"com.cloudbees.plugins.credentials.CredentialsProvider.Delete:authenticated",
+							"hudson.model.Item.Cancel:authenticated",
+							"hudson.model.Item.Discover:anonymous",
+						},
+					},
+					Other: []xmlRawProperty{
+						{
+							XMLName: xml.Name{Local: "org.jenkinsci.plugins.workflow.libs.FolderLibraries"},
+							Plugin:  "workflow-cps-global-lib@2.17",
+							Raw: `
       <libraries>
         <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
           <name>Example Library Configuration</name>
@@ -90,9 +112,13 @@ func Test_parseFolder(t *testing.T) {
           <includeInChangesets>true</includeInChangesets>
         </org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
       </libraries>
-    </org.jenkinsci.plugins.workflow.libs.FolderLibraries>
-  `},
-				FolderViews: xmlRawProperty{Raw: `
+    `,
+						},
+					},
+				},
+				FolderViews: xmlRawProperty{
+					XMLName: xml.Name{Local: "folderViews"},
+					Raw: `
     <views>
       <hudson.model.AllView>
         <owner class="com.cloudbees.hudson.plugins.folder.Folder" reference="../../../.."/>
@@ -125,12 +151,16 @@ func Test_parseFolder(t *testing.T) {
     </views>
     <primaryView>All</primaryView>
     <tabBar class="hudson.views.DefaultViewsTabBar"/>
-  `},
-				HealthMetrics: xmlRawProperty{Raw: `
+  `,
+				},
+				HealthMetrics: xmlRawProperty{
+					XMLName: xml.Name{Local: "healthMetrics"},
+					Raw: `
     <com.cloudbees.hudson.plugins.folder.health.WorstChildHealthMetric>
       <nonRecursive>true</nonRecursive>
     </com.cloudbees.hudson.plugins.folder.health.WorstChildHealthMetric>
-  `},
+  `,
+				},
 			},
 		},
 		{
@@ -149,6 +179,7 @@ func Test_parseFolder(t *testing.T) {
 				t.Errorf("parseFolder() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseFolder() = %#v, want %#v", got, tt.want)
 			}
@@ -159,7 +190,7 @@ func Test_parseFolder(t *testing.T) {
 func Test_folder_Render(t *testing.T) {
 	type fields struct {
 		Description string
-		Properties  string
+		Properties  folderProperties
 	}
 	tests := []struct {
 		name    string
@@ -171,18 +202,49 @@ func Test_folder_Render(t *testing.T) {
 			name: "success",
 			fields: fields{
 				Description: "Example Description",
-				Properties: `<com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
-					<permission>example</permission>
-					<permission>permission</permission>
-				</com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>`,
+				Properties: folderProperties{
+					Security: &folderSecurity{
+						Permission: []string{"example", "permission"},
+						InheritanceStrategy: folderPermissionInheritanceStrategy{
+							Class: "org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy",
+						},
+					},
+					Other: []xmlRawProperty{
+						{
+							XMLName: xml.Name{Local: "org.jenkinsci.plugins.workflow.libs.FolderLibraries"},
+							Plugin:  "workflow-cps-global-lib@2.17",
+							Raw: `
+      <libraries>
+        <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+          <name>Example Library Configuration</name>
+          <implicit>false</implicit>
+          <allowVersionOverride>true</allowVersionOverride>
+          <includeInChangesets>true</includeInChangesets>
+        </org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+      </libraries>
+    `,
+						},
+					},
+				},
 			},
 			want: []byte(`<com.cloudbees.hudson.plugins.folder.Folder>
 	<description>Example Description</description>
 	<properties>
 		<com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"></inheritanceStrategy>
 			<permission>example</permission>
 			<permission>permission</permission>
-		</com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
+    </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
+    <org.jenkinsci.plugins.workflow.libs.FolderLibraries plugin="workflow-cps-global-lib@2.17">
+      <libraries>
+        <org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+          <name>Example Library Configuration</name>
+          <implicit>false</implicit>
+          <allowVersionOverride>true</allowVersionOverride>
+          <includeInChangesets>true</includeInChangesets>
+        </org.jenkinsci.plugins.workflow.libs.LibraryConfiguration>
+      </libraries>
+    </org.jenkinsci.plugins.workflow.libs.FolderLibraries>
 	</properties>
 	<folderViews></folderViews>
 	<healthMetrics></healthMetrics>
@@ -193,7 +255,7 @@ func Test_folder_Render(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &folder{
 				Description: tt.fields.Description,
-				Properties:  xmlRawProperty{Raw: tt.fields.Properties},
+				Properties:  tt.fields.Properties,
 			}
 			got, err := j.Render()
 			if (err != nil) != tt.wantErr {
@@ -202,8 +264,10 @@ func Test_folder_Render(t *testing.T) {
 			}
 
 			strGot := strings.ReplaceAll(string(got), "\n", "")
+			strGot = strings.ReplaceAll(strGot, "  ", "\t")
 			strGot = strings.ReplaceAll(strGot, "\t", "")
 			want := strings.ReplaceAll(string(tt.want), "\n", "")
+			want = strings.ReplaceAll(want, "  ", "\t")
 			want = strings.ReplaceAll(want, "\t", "")
 
 			if strGot != want {

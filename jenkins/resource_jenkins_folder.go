@@ -36,6 +36,29 @@ func resourceJenkinsFolder() *schema.Resource {
 				Description: "The description of this folder's purpose.",
 				Optional:    true,
 			},
+			"security": {
+				Type:        schema.TypeSet,
+				Description: "The Jenkins project-based security configuration.",
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"inheritance_strategy": {
+							Type:        schema.TypeString,
+							Description: "The strategy for applying these permissions sets to existing inherited permissions.",
+							Optional:    true,
+							Default:     "org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy",
+						},
+						"permissions": {
+							Type:        schema.TypeList,
+							Required:    true,
+							Description: "The Jenkins permissions sets that provide access to this folder.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 			"template": {
 				Type:        schema.TypeString,
 				Description: "The configuration file template, used to communicate with Jenkins.",
@@ -58,6 +81,7 @@ func resourceJenkinsFolderCreate(ctx context.Context, d *schema.ResourceData, me
 	f := folder{
 		Description: d.Get("description").(string),
 	}
+	f.Properties.Security = expandSecurity(d.Get("security").(*schema.Set).List())
 
 	xml, err := f.Render()
 	if err != nil {
@@ -116,6 +140,10 @@ func resourceJenkinsFolderRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("security", flattenSecurity(f.Properties.Security)); err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -143,6 +171,7 @@ func resourceJenkinsFolderUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	// Then update the values
 	f.Description = d.Get("description").(string)
+	f.Properties.Security = expandSecurity(d.Get("security").(*schema.Set).List())
 
 	// And send it back to Jenkins
 	xml, err := f.Render()
@@ -156,4 +185,34 @@ func resourceJenkinsFolderUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	return resourceJenkinsFolderRead(ctx, d, meta)
+}
+
+func expandSecurity(config []interface{}) *folderSecurity {
+	if len(config) == 0 {
+		return nil
+	}
+
+	ret := &folderSecurity{}
+	data := config[0].(map[string]interface{})
+	ret.InheritanceStrategy = folderPermissionInheritanceStrategy{
+		Class: data["inheritance_strategy"].(string),
+	}
+	ret.Permission = []string{}
+	for _, permission := range data["permissions"].([]interface{}) {
+		ret.Permission = append(ret.Permission, permission.(string))
+	}
+	return ret
+}
+
+func flattenSecurity(config *folderSecurity) []map[string]interface{} {
+	ret := []map[string]interface{}{}
+	if config == nil {
+		return ret
+	}
+
+	d := map[string]interface{}{}
+	d["inheritance_strategy"] = config.InheritanceStrategy.Class
+	d["permissions"] = config.Permission
+
+	return append(ret, d)
 }

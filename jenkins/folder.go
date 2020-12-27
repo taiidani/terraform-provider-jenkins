@@ -7,15 +7,31 @@ import (
 )
 
 type folder struct {
-	XMLName       xml.Name       `xml:"com.cloudbees.hudson.plugins.folder.Folder"`
-	Description   string         `xml:"description"`
-	Properties    xmlRawProperty `xml:"properties"`
-	FolderViews   xmlRawProperty `xml:"folderViews"`
-	HealthMetrics xmlRawProperty `xml:"healthMetrics"`
+	XMLName       xml.Name         `xml:"com.cloudbees.hudson.plugins.folder.Folder"`
+	Description   string           `xml:"description"`
+	Properties    folderProperties `xml:"properties"`
+	FolderViews   xmlRawProperty   `xml:"folderViews"`
+	HealthMetrics xmlRawProperty   `xml:"healthMetrics"`
+}
+
+type folderProperties struct {
+	Security *folderSecurity  `xml:"com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty,omitempty"`
+	Other    []xmlRawProperty `xml:",any"`
+}
+
+type folderSecurity struct {
+	InheritanceStrategy folderPermissionInheritanceStrategy `xml:"inheritanceStrategy"`
+	Permission          []string                            `xml:"permission"`
+}
+
+type folderPermissionInheritanceStrategy struct {
+	Class string `xml:"class,attr"`
 }
 
 type xmlRawProperty struct {
-	Raw string `xml:",innerxml"`
+	XMLName xml.Name
+	Plugin  string `xml:"plugin,attr,omitempty"`
+	Raw     string `xml:",innerxml"`
 }
 
 func parseFolder(config string) (*folder, error) {
