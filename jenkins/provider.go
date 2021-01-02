@@ -39,9 +39,10 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"jenkins_credential_username": resourceJenkinsCredentialUsername(),
-			"jenkins_folder":              resourceJenkinsFolder(),
-			"jenkins_job":                 resourceJenkinsJob(),
+			"jenkins_credential_username":      resourceJenkinsCredentialUsername(),
+			"jenkins_credential_vault_approle": resourceJenkinsCredentialVaultAppRole(),
+			"jenkins_folder":                   resourceJenkinsFolder(),
+			"jenkins_job":                      resourceJenkinsJob(),
 		},
 
 		ConfigureContextFunc: configureProvider,
