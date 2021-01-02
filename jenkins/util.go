@@ -22,6 +22,14 @@ func formatFolderName(name string) string {
 	return strings.Join(ret, "/job/")
 }
 
+// formatFolderID will format a set of folders in the way that Jenkins expects for the "folder" property, with "/job/name/job/name" separators.
+func formatFolderID(folders []string) string {
+	if len(folders) == 0 {
+		return ""
+	}
+	return "/job/" + formatFolderName(strings.Join(folders, "/"))
+}
+
 // extractFolders prepares a job name for some folder-aware client library calls.
 // These calls are different from other calls in that they expect the folders to be specified
 // as a series of parameters with no "/job/" separators.

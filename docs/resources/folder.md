@@ -59,3 +59,11 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `template` - A Jenkins-compatible XML template to describe the folder. You can retrieve an existing folder's XML by appending `/config.xml` to its URL and viewing the source in your browser.
+
+## Import
+
+Folders may be imported by their canonical name, e.g.
+
+```sh
+$ terraform import jenkins_folder.example /job/folder-name
+```

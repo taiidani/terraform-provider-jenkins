@@ -16,6 +16,9 @@ func resourceJenkinsFolder() *schema.Resource {
 		ReadContext:   resourceJenkinsFolderRead,
 		UpdateContext: resourceJenkinsFolderUpdate,
 		DeleteContext: resourceJenkinsJobDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,
@@ -71,7 +74,7 @@ func resourceJenkinsFolder() *schema.Resource {
 func resourceJenkinsFolderCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
 	name := d.Get("name").(string)
-	folderName := formatFolderName(d.Get("folder").(string))
+	folderName := d.Get("folder").(string)
 
 	// Validate that the folder exists
 	if err := folderExists(client, folderName); err != nil {
@@ -133,6 +136,14 @@ func resourceJenkinsFolderRead(ctx context.Context, d *schema.ResourceData, meta
 	// Next, parse the properties from the config
 	f, err := parseFolder(config)
 	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("folder", formatFolderID(folders)); err != nil {
 		return diag.FromErr(err)
 	}
 

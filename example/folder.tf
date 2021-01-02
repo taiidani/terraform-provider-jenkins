@@ -11,3 +11,9 @@ resource "jenkins_folder" "example" {
     ]
   }
 }
+
+resource "jenkins_folder" "example_subfolder" {
+  name        = "subfolder"
+  folder      = jenkins_folder.example.id
+  description = "A sample subfolder"
+}
