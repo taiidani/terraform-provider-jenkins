@@ -58,6 +58,7 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
+* `id` - The full canonical folder path, E.G. `/job/parent`.
 * `template` - A Jenkins-compatible XML template to describe the folder. You can retrieve an existing folder's XML by appending `/config.xml` to its URL and viewing the source in your browser.
 
 ## Import

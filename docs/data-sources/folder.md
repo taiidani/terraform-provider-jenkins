@@ -24,5 +24,6 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
+* `id` - The full canonical folder path, E.G. `/job/parent`.
 * `description` - A block of text describing the folder's purpose.
 * `template` - A Jenkins-compatible XML template to describe the folder.
