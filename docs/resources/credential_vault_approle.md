@@ -5,6 +5,7 @@ Manages a Vault AppRole credential within Jenkins. This credential may then be r
 ~> The "secret_id" property may leave plain-text secret id in your state file. If using the property to manage the secret id in Terraform, ensure that your state file is properly secured and encrypted at rest.
 
 ~> When using this resource within a folder context it can conflict with the [folder resource](folder) template. When using these in combination you may need to add a lifecycle `ignore_changes` rule to the folder's `template` property.
+~> The Jenkins installation that uses this resource is expected to have the [Hashicorp Vault Plugin](https://plugins.jenkins.io/hashicorp-vault-plugin/) installed in their system.
 
 ## Example Usage
 
