@@ -50,11 +50,11 @@ func resourceJenkinsJob() *schema.Resource {
 func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
 	name := d.Get("name").(string)
-	folder := formatFolderName(d.Get("folder").(string))
+	folderName := d.Get("folder").(string)
 
 	// Validate that the folder exists
-	if err := folderExists(client, folder); err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::create - Could not find folder '%s': %w", folder, err))
+	if err := folderExists(client, folderName); err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::create - Could not find folder '%s': %w", folderName, err))
 	}
 
 	xml, err := renderTemplate(d.Get("template").(string), d)
@@ -62,14 +62,14 @@ func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(fmt.Errorf("jenkins::create - Error binding config.xml template to %q: %w", name, err))
 	}
 
-	folders := extractFolders(folder)
+	folders := extractFolders(folderName)
 	_, err = client.CreateJobInFolder(xml, name, folders...)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q in folder %s: %w", name, folder, err))
+		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q in folder %s: %w", name, folderName, err))
 	}
 
-	log.Printf("[DEBUG] jenkins::create - job %q created in folder %s", name, folder)
-	d.SetId(formatFolderName(folder + "/" + name))
+	log.Printf("[DEBUG] jenkins::create - job %q created in folder %s", name, folderName)
+	d.SetId(formatFolderName(folderName + "/" + name))
 
 	return resourceJenkinsJobRead(ctx, d, meta)
 }
@@ -99,6 +99,14 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 	log.Printf("[DEBUG] jenkins::read - Job %q exists", job.Base)
 	d.SetId(job.Base)
 	if err := d.Set("template", config); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("name", name); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("folder", formatFolderID(folders)); err != nil {
 		return diag.FromErr(err)
 	}
 

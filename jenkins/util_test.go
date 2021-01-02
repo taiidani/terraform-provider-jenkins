@@ -32,6 +32,30 @@ func TestFormatFolderName(t *testing.T) {
 	}
 }
 
+func TestFormatFolderID(t *testing.T) {
+	inputSimple := []string{"folder-id"}
+	inputNested := []string{"folder-parent", "folder-id"}
+	inputDuped := []string{"folder-parent", "job", "folder-id"}
+
+	// Simple
+	actual := formatFolderID(inputSimple)
+	if actual != "/job/folder-id" {
+		t.Errorf("Expected /job/folder-id but received %s", actual)
+	}
+
+	// Nested
+	actual = formatFolderID(inputNested)
+	if actual != "/job/folder-parent/job/folder-id" {
+		t.Errorf("Expected /job/folder-parent/job/folder-id but received %s", actual)
+	}
+
+	// Deduplicate
+	actual = formatFolderID(inputDuped)
+	if actual != "/job/folder-parent/job/folder-id" {
+		t.Errorf("Expected /job/folder-parent/job/folder-id but received %s", actual)
+	}
+}
+
 func TestParseCanonicalJobID(t *testing.T) {
 	inputSimple, inputFolder, inputNested := "job-name", "folder/job-name", "parent/child/job-name"
 
