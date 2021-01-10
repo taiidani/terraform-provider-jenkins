@@ -29,7 +29,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic(t *testing.T) {
 					domain = "_"
 				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_credential_vault_approle.foo", "name", "tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_credential_vault_approle.foo", "description", "Terraform acceptance tests "+randString),
