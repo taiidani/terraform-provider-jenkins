@@ -18,7 +18,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic(t *testing.T) {
 			{
 				Config: fmt.Sprintf(`
 				resource jenkins_credential_vault_approle foo {
-					name = "test-approle"
+					name = "tf-acc-test-%s"
 					description = "Terraform acceptance tests %s"
 					role_id = "foo"
 					secret_id = "bar"
@@ -27,7 +27,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic(t *testing.T) {
 				data jenkins_credential_vault_approle foo {
 					name   = jenkins_credential_vault_approle.foo.name
 					domain = "_"
-				}`, randString),
+				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
