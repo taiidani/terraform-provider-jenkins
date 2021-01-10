@@ -65,20 +65,12 @@ func TestAccJenkinsCredentialUsername_folder(t *testing.T) {
 				resource jenkins_folder foo {
 					name = "tf-acc-test-%s"
 					description = "Terraform acceptance testing"
-
-					lifecycle {
-						ignore_changes = [template]
-					}
 				}
 
 				resource jenkins_folder foo_sub {
 					name = "subfolder"
 					folder = jenkins_folder.foo.id
 					description = "Terraform acceptance testing"
-
-					lifecycle {
-						ignore_changes = [template]
-					}
 				}
 
 				resource jenkins_credential_username foo {
