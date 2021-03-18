@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"fmt"
 	"log"
 	"strings"
 
@@ -86,4 +87,8 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
 	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
 	return old == new
+}
+
+func generateCredentialID(folder, name string) string {
+	return fmt.Sprintf("%s/%s", folder, name)
 }
