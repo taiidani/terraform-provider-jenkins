@@ -48,7 +48,7 @@ provider "jenkins" {}
 Usage:
 
 ```sh
-$ export JENKINS_SERVER_URL="https://jenkins.url"
+$ export JENKINS_URL="https://jenkins.url"
 $ export JENKINS_USERNAME="username"
 $ export JENKINS_PASSWORD="password"
 $ terraform plan
