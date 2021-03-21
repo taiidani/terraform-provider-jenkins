@@ -7,7 +7,7 @@ Manages a username credential within Jenkins. This username may then be referenc
 ## Example Usage
 
 ```hcl
-resource jenkins_credential_username example {
+resource "jenkins_credential_username" "example" {
   name     = "example-username"
   username = "example"
   password = "super-secret"

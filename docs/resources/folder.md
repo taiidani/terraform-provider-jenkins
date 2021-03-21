@@ -7,12 +7,12 @@ Manages a folder within Jenkins.
 ## Example Usage
 
 ```hcl
-resource jenkins_folder example {
+resource "jenkins_folder" "example" {
   name        = "folder-name"
   description = "A top-level folder"
 }
 
-resource jenkins_folder example_child {
+resource "jenkins_folder" "example_child" {
   name        = "child-name"
   folder      = jenkins_folder.example.id
   description = "A nested subfolder"

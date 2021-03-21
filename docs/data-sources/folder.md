@@ -7,7 +7,7 @@ Get the attributes of a folder within Jenkins.
 ## Example Usage
 
 ```hcl
-data jenkins_folder example {
+data "jenkins_folder" "example" {
   name        = "folder-name"
 }
 ```

@@ -5,7 +5,7 @@ Get the attributes of a username credential within Jenkins.
 ## Example Usage
 
 ```hcl
-data jenkins_credential_username example {
+data "jenkins_credential_username" "example" {
   name        = "job-name"
 }
 ```
