@@ -83,7 +83,7 @@ func resourceJenkinsCredentialSecretTextCreate(ctx context.Context, d *schema.Re
 	domain := d.Get("domain").(string)
 	err := cm.Add(domain, cred)
 	if err != nil {
-		return diag.Errorf("Could not create username credentials: %s", err)
+		return diag.Errorf("Could not create secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
