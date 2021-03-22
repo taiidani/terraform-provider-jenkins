@@ -108,7 +108,7 @@ func resourceJenkinsCredentialSecretTextRead(ctx context.Context, d *schema.Reso
 			return nil
 		}
 
-		return diag.Errorf("Could not read username credentials: %s", err)
+		return diag.Errorf("Could not read secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
