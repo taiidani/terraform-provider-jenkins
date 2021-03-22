@@ -55,7 +55,7 @@ func resourceJenkinsCredentialSecretText() *schema.Resource {
 			},
 			"secret": {
 				Type:        schema.TypeString,
-				Description: "The credentias secret tect. This is mandatory.",
+				Description: "The credentials secret text. This is mandatory.",
 				Required:    true,
 				Sensitive:   true,
 			},
