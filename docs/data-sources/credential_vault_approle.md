@@ -7,7 +7,7 @@ Get the attributes of a Vault AppRole credential within Jenkins.
 ## Example Usage
 
 ```hcl
-data jenkins_credential_vault_approle example {
+data "jenkins_credential_vault_approle" "example" {
   name        = "job-name"
 }
 ```

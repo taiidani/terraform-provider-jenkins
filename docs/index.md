@@ -6,7 +6,7 @@ The Jenkins provider is used to interact with the Jenkins API. The provider need
 
 ```hcl
 # Configure the Jenkins Provider
-provider jenkins {
+provider "jenkins" {
   server_url = "https://jenkins.url" # Or use JENKINS_URL env var
   username   = "username"            # Or use JENKINS_USERNAME env var
   password   = "password"            # Or use JENKINS_PASSWORD env var
@@ -14,7 +14,7 @@ provider jenkins {
 }
 
 # Create a Jenkins job
-resource jenkins_job example {
+resource "jenkins_job" "example" {
   # ...
 }
 ```
@@ -30,7 +30,7 @@ Static credentials can be provided by adding a `username` and `password` in-line
 Usage:
 
 ```hcl
-provider jenkins {
+provider "jenkins" {
   server_url = "https://jenkins.url"
   username   = "username"
   password   = "password"
@@ -42,13 +42,13 @@ provider jenkins {
 You can provide your credentials via the `JENKINS_USERNAME` and `JENKINS_PASSWORD`, environment variables. `JENKINS_URL` is also available which will assign the `server_url` property.
 
 ```hcl
-provider jenkins {}
+provider "jenkins" {}
 ```
 
 Usage:
 
 ```sh
-$ export JENKINS_SERVER_URL="https://jenkins.url"
+$ export JENKINS_URL="https://jenkins.url"
 $ export JENKINS_USERNAME="username"
 $ export JENKINS_PASSWORD="password"
 $ terraform plan

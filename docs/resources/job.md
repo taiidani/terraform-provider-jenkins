@@ -5,11 +5,11 @@ Manages a job within Jenkins.
 ## Example Usage
 
 ```hcl
-resource jenkins_folder example {
+resource "jenkins_folder" "example" {
   name = "folder-name"
 }
 
-resource jenkins_job example {
+resource "jenkins_job" "example" {
   name     = "example"
   folder   = jenkins_folder.example.id
   template = file("${path.module}/job.xml")

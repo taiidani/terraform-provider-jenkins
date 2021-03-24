@@ -5,7 +5,7 @@ Get the attributes of a job within Jenkins.
 ## Example Usage
 
 ```hcl
-data jenkins_job example {
+data "jenkins_job" "example" {
   name        = "job-name"
 }
 ```
