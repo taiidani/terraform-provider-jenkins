@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceJenkinsCredentialUsername() *schema.Resource {
+func resourceJenkinsCredentialSecretText() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceJenkinsCredentialUsernameCreate,
-		ReadContext:   resourceJenkinsCredentialUsernameRead,
-		UpdateContext: resourceJenkinsCredentialUsernameUpdate,
-		DeleteContext: resourceJenkinsCredentialUsernameDelete,
+		CreateContext: resourceJenkinsCredentialSecretTextCreate,
+		ReadContext:   resourceJenkinsCredentialSecretTextRead,
+		UpdateContext: resourceJenkinsCredentialSecretTextUpdate,
+		DeleteContext: resourceJenkinsCredentialSecretTextDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceJenkinsCredentialUsernameImport,
+			StateContext: resourceJenkinsCredentialSecretTextImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -53,22 +53,17 @@ func resourceJenkinsCredentialUsername() *schema.Resource {
 				Optional:    true,
 				Default:     "Managed by Terraform",
 			},
-			"username": {
+			"secret": {
 				Type:        schema.TypeString,
-				Description: "The credentials user username.",
+				Description: "The credentials secret text. This is mandatory.",
 				Required:    true,
-			},
-			"password": {
-				Type:        schema.TypeString,
-				Description: "The credentials user password. If left empty will be unmanaged.",
-				Optional:    true,
 				Sensitive:   true,
 			},
 		},
 	}
 }
 
-func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretTextCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
 	cm := client.Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
@@ -78,29 +73,28 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
-	cred := jenkins.UsernameCredentials{
+	cred := jenkins.StringCredentials{
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-		Username:    d.Get("username").(string),
-		Password:    d.Get("password").(string),
+		Secret:      d.Get("secret").(string),
 	}
 
 	domain := d.Get("domain").(string)
 	err := cm.Add(domain, cred)
 	if err != nil {
-		return diag.Errorf("Could not create username credentials: %s", err)
+		return diag.Errorf("Could not create secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
+	return resourceJenkinsCredentialSecretTextRead(ctx, d, meta)
 }
 
-func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretTextRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
-	cred := jenkins.UsernameCredentials{}
+	cred := jenkins.StringCredentials{}
 	err := cm.GetSingle(
 		d.Get("domain").(string),
 		d.Get("name").(string),
@@ -114,46 +108,40 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 			return nil
 		}
 
-		return diag.Errorf("Could not read username credentials: %s", err)
+		return diag.Errorf("Could not read secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	d.Set("scope", cred.Scope)
 	d.Set("description", cred.Description)
-	d.Set("username", cred.Username)
-	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
-	// Password only applies to Create/Update operations if the "password" property is non-empty
+	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
+	// Secret only applies to Create/Update operations if the "password" property is non-empty
 
 	return nil
 }
 
-func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretTextUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	domain := d.Get("domain").(string)
-	cred := jenkins.UsernameCredentials{
+	cred := jenkins.StringCredentials{
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-		Username:    d.Get("username").(string),
-	}
-
-	// Only enforce the password if it is non-empty
-	if d.Get("password").(string) != "" {
-		cred.Password = d.Get("password").(string)
+		Secret:      d.Get("secret").(string),
 	}
 
 	err := cm.Update(domain, d.Get("name").(string), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update username credentials: %s", err)
+		return diag.Errorf("Could not update secret text: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialUsernameRead(ctx, d, meta)
+	return resourceJenkinsCredentialSecretTextRead(ctx, d, meta)
 }
 
-func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretTextDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
@@ -168,7 +156,7 @@ func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceJenkinsCredentialUsernameImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceJenkinsCredentialSecretTextImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	ret := []*schema.ResourceData{d}
 
 	splitID := strings.Split(d.Id(), "/")

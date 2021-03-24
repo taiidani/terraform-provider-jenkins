@@ -108,3 +108,11 @@ func TestTemplateDiff(t *testing.T) {
 		t.Errorf("Expected %s to be considered inequal to %s", inputLeft, inputRight)
 	}
 }
+
+func TestGenerateCredentialID(t *testing.T) {
+	inputFolder, inputName := "test-folder", "test-name"
+	actual := generateCredentialID(inputFolder, inputName)
+	if actual != "test-folder/test-name" {
+		t.Errorf("Expected %s/%s but got: %s", inputFolder, inputName, actual)
+	}
+}
