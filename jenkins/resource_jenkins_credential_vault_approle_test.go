@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -132,6 +133,7 @@ func TestAccJenkinsCredentialVaultAppRole_folder(t *testing.T) {
 func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *VaultAppRoleCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(jenkinsClient)
+		ctx := context.Background()
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -144,7 +146,7 @@ func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *
 
 		manager := client.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
-		err := manager.GetSingle(rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
+		err := manager.GetSingle(ctx, rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
 			return fmt.Errorf("Unable to retrieve credentials for %s - %s: %w", rs.Primary.Attributes["folder"], rs.Primary.Attributes["name"], err)
 		}
@@ -155,6 +157,7 @@ func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *
 
 func testAccCheckJenkinsCredentialVaultAppRoleDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(jenkinsClient)
+	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_credential_vault_approle" {
@@ -166,7 +169,7 @@ func testAccCheckJenkinsCredentialVaultAppRoleDestroy(s *terraform.State) error 
 		cred := VaultAppRoleCredentials{}
 		manager := client.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
-		err := manager.GetSingle(rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
+		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {
 			return fmt.Errorf("Credentials still exists: %s - %s", rs.Primary.Attributes["folder"], rs.Primary.Attributes["name"])
 		}

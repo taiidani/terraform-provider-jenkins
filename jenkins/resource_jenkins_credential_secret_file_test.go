@@ -11,51 +11,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccJenkinsCredentialSecretText_basic(t *testing.T) {
-	var cred jenkins.StringCredentials
+func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
+	var cred jenkins.FileCredentials
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsCredentialSecretTextDestroy,
+		CheckDestroy: testAccCheckJenkinsCredentialSecretFileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-				resource jenkins_credential_secret_text foo {
-				  name = "test-secret-text"
-				  secret = "very-secret"
+				resource jenkins_credential_secret_file foo {
+				  name = "test-secret-file"
+				  filename = "secret.txt"             
+				  secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("jenkins_credential_secret_text.foo", "id", "/test-secret-text"),
-					testAccCheckJenkinsCredentialSecretTextExists("jenkins_credential_secret_text.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "id", "/test-secret-file"),
+					testAccCheckJenkinsCredentialSecretFileExists("jenkins_credential_secret_file.foo", &cred),
 				),
 			},
 			{
 				// Update by adding description
 				Config: `
-				resource jenkins_credential_secret_text foo {
-				  name = "test-secret-text"
+				resource jenkins_credential_secret_file foo {
+				  name = "test-secret-file"
 				  description = "new-description"
-				  secret = "very-secret"
+                                  filename = "secret.txt"             
+                                  secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
 				}`,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckJenkinsCredentialSecretTextExists("jenkins_credential_secret_text.foo", &cred),
-					resource.TestCheckResourceAttr("jenkins_credential_secret_text.foo", "description", "new-description"),
+					testAccCheckJenkinsCredentialSecretFileExists("jenkins_credential_secret_file.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "description", "new-description"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccJenkinsCredentialSecretText_folder(t *testing.T) {
-	var cred jenkins.StringCredentials
+func TestAccJenkinsCredentialSecretFile_folder(t *testing.T) {
+	var cred jenkins.FileCredentials
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckJenkinsCredentialSecretTextDestroy,
+			testAccCheckJenkinsCredentialSecretFileDestroy,
 			testAccCheckJenkinsFolderDestroy,
 		),
 		Steps: []resource.TestStep{
@@ -72,14 +74,15 @@ func TestAccJenkinsCredentialSecretText_folder(t *testing.T) {
 					description = "Terraform acceptance testing"
 				}
 
-				resource jenkins_credential_secret_text foo {
-				  name = "test-secret-text"
-				  folder = jenkins_folder.foo_sub.id
-				  secret = "very-secret"
+				resource jenkins_credential_secret_file foo {
+					name = "test-secret-file"
+					folder = jenkins_folder.foo_sub.id
+					filename = "secret.txt"             
+					secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
 				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("jenkins_credential_secret_text.foo", "id", "/job/tf-acc-test-"+randString+"/job/subfolder/test-secret-text"),
-					testAccCheckJenkinsCredentialSecretTextExists("jenkins_credential_secret_text.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "id", "/job/tf-acc-test-"+randString+"/job/subfolder/test-secret-file"),
+					testAccCheckJenkinsCredentialSecretFileExists("jenkins_credential_secret_file.foo", &cred),
 				),
 			},
 			{
@@ -104,22 +107,24 @@ func TestAccJenkinsCredentialSecretText_folder(t *testing.T) {
 					}
 				}
 
-				resource jenkins_credential_secret_text foo {
-				  name = "test-secret-text"
-				  folder = jenkins_folder.foo_sub.id
-				  description = "new-description"
-				  secret = "very-secret"
+				resource jenkins_credential_secret_file foo {
+					name = "test-secret-file"
+					folder = jenkins_folder.foo_sub.id
+					description = "new-description"
+                                        filename = "secret.txt"             
+                                        secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
+
 				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckJenkinsCredentialSecretTextExists("jenkins_credential_secret_text.foo", &cred),
-					resource.TestCheckResourceAttr("jenkins_credential_secret_text.foo", "description", "new-description"),
+					testAccCheckJenkinsCredentialSecretFileExists("jenkins_credential_secret_file.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "description", "new-description"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckJenkinsCredentialSecretTextExists(resourceName string, cred *jenkins.StringCredentials) resource.TestCheckFunc {
+func testAccCheckJenkinsCredentialSecretFileExists(resourceName string, cred *jenkins.FileCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		client := testAccProvider.Meta().(jenkinsClient)
 		ctx := context.Background()
@@ -144,18 +149,18 @@ func testAccCheckJenkinsCredentialSecretTextExists(resourceName string, cred *je
 	}
 }
 
-func testAccCheckJenkinsCredentialSecretTextDestroy(s *terraform.State) error {
+func testAccCheckJenkinsCredentialSecretFileDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "jenkins_credential_secret_text" {
+		if rs.Type != "jenkins_credential_secret_file" {
 			continue
 		} else if _, ok := rs.Primary.Meta["name"]; !ok {
 			continue
 		}
 
-		cred := jenkins.StringCredentials{}
+		cred := jenkins.FileCredentials{}
 		manager := client.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)

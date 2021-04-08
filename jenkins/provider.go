@@ -46,6 +46,7 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
+                        "jenkins_credential_secret_file":   resourceJenkinsCredentialSecretFile(),
 			"jenkins_credential_secret_text":   resourceJenkinsCredentialSecretText(),
 			"jenkins_credential_username":      resourceJenkinsCredentialUsername(),
 			"jenkins_credential_vault_approle": resourceJenkinsCredentialVaultAppRole(),
@@ -74,7 +75,7 @@ func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	client := newJenkinsClient(&config)
-	if _, err = client.Init(); err != nil {
+	if _, err = client.Init(ctx); err != nil {
 		return nil, diag.FromErr(err)
 	}
 

@@ -86,13 +86,14 @@ func TestAccJenkinsJob_nested(t *testing.T) {
 
 func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
 	client := testAccProvider.Meta().(jenkinsClient)
+	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "jenkins_job" {
 			continue
 		}
 
-		_, err := client.GetJob(rs.Primary.ID)
+		_, err := client.GetJob(ctx, rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("Job %s still exists", rs.Primary.ID)
 		}
@@ -116,7 +117,7 @@ func Test_resourceJenkinsJobDelete(t *testing.T) {
 			name: "success",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockDeleteJobInFolder: func(name string, parentIDs ...string) (bool, error) {
+					mockDeleteJobInFolder: func(ctx context.Context, name string, parentIDs ...string) (bool, error) {
 						return true, nil
 					},
 				},
@@ -127,7 +128,7 @@ func Test_resourceJenkinsJobDelete(t *testing.T) {
 			name: "error",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockDeleteJobInFolder: func(name string, parentIDs ...string) (bool, error) {
+					mockDeleteJobInFolder: func(ctx context.Context, name string, parentIDs ...string) (bool, error) {
 						return false, fmt.Errorf("omg")
 					},
 				},
@@ -162,7 +163,7 @@ func Test_resourceJenkinsJobRead(t *testing.T) {
 			name: "missing-job",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockGetJob: func(id string, parentIDs ...string) (*jenkins.Job, error) {
+					mockGetJob: func(ctx context.Context, id string, parentIDs ...string) (*jenkins.Job, error) {
 						return nil, fmt.Errorf("404")
 					},
 				},
@@ -173,7 +174,7 @@ func Test_resourceJenkinsJobRead(t *testing.T) {
 			name: "error-job",
 			args: args{
 				meta: &mockJenkinsClient{
-					mockGetJob: func(id string, parentIDs ...string) (*jenkins.Job, error) {
+					mockGetJob: func(ctx context.Context, id string, parentIDs ...string) (*jenkins.Job, error) {
 						return nil, fmt.Errorf("500")
 					},
 				},

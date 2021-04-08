@@ -69,7 +69,7 @@ func resourceJenkinsCredentialSecretTextCreate(ctx context.Context, d *schema.Re
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	// Validate that the folder exists
-	if err := folderExists(client, cm.Folder); err != nil {
+	if err := folderExists(ctx, client, cm.Folder); err != nil {
 		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
@@ -81,7 +81,7 @@ func resourceJenkinsCredentialSecretTextCreate(ctx context.Context, d *schema.Re
 	}
 
 	domain := d.Get("domain").(string)
-	err := cm.Add(domain, cred)
+	err := cm.Add(ctx, domain, cred)
 	if err != nil {
 		return diag.Errorf("Could not create secret text credentials: %s", err)
 	}
@@ -96,6 +96,7 @@ func resourceJenkinsCredentialSecretTextRead(ctx context.Context, d *schema.Reso
 
 	cred := jenkins.StringCredentials{}
 	err := cm.GetSingle(
+		ctx,
 		d.Get("domain").(string),
 		d.Get("name").(string),
 		&cred,
@@ -132,7 +133,7 @@ func resourceJenkinsCredentialSecretTextUpdate(ctx context.Context, d *schema.Re
 		Secret:      d.Get("secret").(string),
 	}
 
-	err := cm.Update(domain, d.Get("name").(string), &cred)
+	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
 	if err != nil {
 		return diag.Errorf("Could not update secret text: %s", err)
 	}
@@ -146,6 +147,7 @@ func resourceJenkinsCredentialSecretTextDelete(ctx context.Context, d *schema.Re
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	err := cm.Delete(
+		ctx,
 		d.Get("domain").(string),
 		d.Get("name").(string),
 	)

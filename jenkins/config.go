@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -9,11 +10,11 @@ import (
 )
 
 type jenkinsClient interface {
-	CreateJobInFolder(config string, jobName string, parentIDs ...string) (*jenkins.Job, error)
+	CreateJobInFolder(ctx context.Context, config string, jobName string, parentIDs ...string) (*jenkins.Job, error)
 	Credentials() *jenkins.CredentialsManager
-	DeleteJobInFolder(name string, parentIDs ...string) (bool, error)
-	GetJob(id string, parentIDs ...string) (*jenkins.Job, error)
-	GetFolder(id string, parents ...string) (*jenkins.Folder, error)
+	DeleteJobInFolder(ctx context.Context, name string, parentIDs ...string) (bool, error)
+	GetJob(ctx context.Context, id string, parentIDs ...string) (*jenkins.Job, error)
+	GetFolder(ctx context.Context, id string, parents ...string) (*jenkins.Folder, error)
 }
 
 // jenkinsAdapter wraps the Jenkins client, enabling additional functionality
@@ -48,6 +49,6 @@ func (j *jenkinsAdapter) Credentials() *jenkins.CredentialsManager {
 
 // DeleteJobInFolder assists in running DeleteJob funcs, as DeleteJob is not folder aware
 // and cannot take a canonical job ID without mishandling it.
-func (j *jenkinsAdapter) DeleteJobInFolder(name string, parentIDs ...string) (bool, error) {
-	return j.DeleteJob(strings.Join(append(parentIDs, name), "/job/"))
+func (j *jenkinsAdapter) DeleteJobInFolder(ctx context.Context, name string, parentIDs ...string) (bool, error) {
+	return j.DeleteJob(ctx, strings.Join(append(parentIDs, name), "/job/"))
 }

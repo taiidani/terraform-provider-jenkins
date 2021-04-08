@@ -53,7 +53,7 @@ func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta 
 	folderName := d.Get("folder").(string)
 
 	// Validate that the folder exists
-	if err := folderExists(client, folderName); err != nil {
+	if err := folderExists(ctx, client, folderName); err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::create - Could not find folder '%s': %w", folderName, err))
 	}
 
@@ -63,7 +63,7 @@ func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	folders := extractFolders(folderName)
-	_, err = client.CreateJobInFolder(xml, name, folders...)
+	_, err = client.CreateJobInFolder(ctx, xml, name, folders...)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q in folder %s: %w", name, folderName, err))
 	}
@@ -80,7 +80,7 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 
 	log.Printf("[DEBUG] jenkins::read - Looking for job %q", name)
 
-	job, err := client.GetJob(name, folders...)
+	job, err := client.GetJob(ctx, name, folders...)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "404") {
 			// Job does not exist
@@ -91,7 +91,7 @@ func resourceJenkinsJobRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q does not exist: %w", name, err))
 	}
 
-	config, err := job.GetConfig()
+	config, err := job.GetConfig(ctx)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::read - Job %q could not extract configuration: %v", job.Base, err))
 	}
@@ -118,7 +118,7 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	name, folders := parseCanonicalJobID(d.Id())
 
 	// grab job by current name
-	job, err := client.GetJob(name, folders...)
+	job, err := client.GetJob(ctx, name, folders...)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::update - Could not find job %q: %w", name, err))
 	}
@@ -128,7 +128,7 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(fmt.Errorf("jenkins::update - Error binding config.xml template to %q: %w", name, err))
 	}
 
-	err = job.UpdateConfig(xml)
+	err = job.UpdateConfig(ctx, xml)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::update - Error updating job %q configuration: %w", name, err))
 	}
@@ -142,7 +142,7 @@ func resourceJenkinsJobDelete(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)
 
-	ok, err := client.DeleteJobInFolder(name, folders...)
+	ok, err := client.DeleteJobInFolder(ctx, name, folders...)
 	if err != nil {
 		return diag.FromErr(err)
 	}

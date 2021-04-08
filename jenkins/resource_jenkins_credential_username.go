@@ -74,7 +74,7 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	// Validate that the folder exists
-	if err := folderExists(client, cm.Folder); err != nil {
+	if err := folderExists(ctx, client, cm.Folder); err != nil {
 		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
@@ -87,7 +87,7 @@ func resourceJenkinsCredentialUsernameCreate(ctx context.Context, d *schema.Reso
 	}
 
 	domain := d.Get("domain").(string)
-	err := cm.Add(domain, cred)
+	err := cm.Add(ctx, domain, cred)
 	if err != nil {
 		return diag.Errorf("Could not create username credentials: %s", err)
 	}
@@ -102,6 +102,7 @@ func resourceJenkinsCredentialUsernameRead(ctx context.Context, d *schema.Resour
 
 	cred := jenkins.UsernameCredentials{}
 	err := cm.GetSingle(
+		ctx,
 		d.Get("domain").(string),
 		d.Get("name").(string),
 		&cred,
@@ -144,7 +145,7 @@ func resourceJenkinsCredentialUsernameUpdate(ctx context.Context, d *schema.Reso
 		cred.Password = d.Get("password").(string)
 	}
 
-	err := cm.Update(domain, d.Get("name").(string), &cred)
+	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
 	if err != nil {
 		return diag.Errorf("Could not update username credentials: %s", err)
 	}
@@ -158,6 +159,7 @@ func resourceJenkinsCredentialUsernameDelete(ctx context.Context, d *schema.Reso
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	err := cm.Delete(
+		ctx,
 		d.Get("domain").(string),
 		d.Get("name").(string),
 	)

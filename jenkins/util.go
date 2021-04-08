@@ -1,6 +1,7 @@
 package jenkins
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -60,11 +61,11 @@ func parseCanonicalJobID(id string) (name string, folders []string) {
 }
 
 // folderExists will validate that a given folder name exists
-func folderExists(client jenkinsClient, name string) error {
+func folderExists(ctx context.Context, client jenkinsClient, name string) error {
 	folders := extractFolders(name)
 	if len(folders) > 0 {
 		folderName, parentFolders := parseCanonicalJobID(name)
-		_, err := client.GetFolder(folderName, parentFolders...)
+		_, err := client.GetFolder(ctx, folderName, parentFolders...)
 		if err != nil {
 			return err
 		}
