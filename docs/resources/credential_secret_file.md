@@ -22,7 +22,7 @@ The following arguments are supported:
 * `scope` - (Optional) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 * `description` - (Optional) A human readable description of the credentials being stored.
 * `filename` - (Required) The secret file filename on jenkins server side.
-* `secretbyes` - (Required) The secret file, base64 encoded content. I can be sourced directly from local file with filebase64(path) TF function or given directly.
+* `secretbytes` - (Required) The secret file, base64 encoded content. It can be sourced directly from local file with filebase64(path) TF function or given directly.
 
 
 ## Attribute Reference

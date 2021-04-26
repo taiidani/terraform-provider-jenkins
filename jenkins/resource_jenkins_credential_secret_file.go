@@ -53,11 +53,11 @@ func resourceJenkinsCredentialSecretFile() *schema.Resource {
 				Optional:    true,
 				Default:     "Managed by Terraform",
 			},
-                        "filename": {
-                                Type:        schema.TypeString,
-                                Description: "Jenkins side filename.",
-                                Required:    true,
-                        },
+			"filename": {
+				Type:        schema.TypeString,
+				Description: "Jenkins side filename.",
+				Required:    true,
+			},
 			"secretbytes": {
 				Type:        schema.TypeString,
 				Description: "Base64 encoded secret file content.",
@@ -82,7 +82,7 @@ func resourceJenkinsCredentialSecretFileCreate(ctx context.Context, d *schema.Re
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-                Filename:    d.Get("filename").(string),
+		Filename:    d.Get("filename").(string),
 		SecretBytes: d.Get("secretbytes").(string),
 	}
 
@@ -121,7 +121,7 @@ func resourceJenkinsCredentialSecretFileRead(ctx context.Context, d *schema.Reso
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	d.Set("scope", cred.Scope)
 	d.Set("description", cred.Description)
-        d.Set("filename", cred.Filename)
+	d.Set("filename", cred.Filename)
 	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
 	// Secret only applies to Create/Update operations if the "password" property is non-empty
 
@@ -137,7 +137,7 @@ func resourceJenkinsCredentialSecretFileUpdate(ctx context.Context, d *schema.Re
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-                Filename:    d.Get("filename").(string),
+		Filename:    d.Get("filename").(string),
 		SecretBytes: d.Get("secretbytes").(string),
 	}
 

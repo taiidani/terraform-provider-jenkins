@@ -24,7 +24,7 @@ func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
 				resource jenkins_credential_secret_file foo {
 				  name = "test-secret-file"
 				  filename = "secret.txt"             
-				  secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
+				  secretbytes = base64encode("This is a test.")
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "id", "/test-secret-file"),
@@ -32,17 +32,17 @@ func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
 				),
 			},
 			{
-				// Update by adding description
+				// Update by changing secretbytes
 				Config: `
 				resource jenkins_credential_secret_file foo {
 				  name = "test-secret-file"
-				  description = "new-description"
-                                  filename = "secret.txt"             
-                                  secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
+				  filename = "secret.txt"             
+				  secretbytes = base64encode("This is a new secret content.")
 				}`,
+				// In comparison below I use already base64 encoded value of: VGhpcyBpcyBhIG5ldyBzZWNyZXQgY29udGVudC4=
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckJenkinsCredentialSecretFileExists("jenkins_credential_secret_file.foo", &cred),
-					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "description", "new-description"),
+					resource.TestCheckResourceAttr("jenkins_credential_secret_file.foo", "secretbytes", "VGhpcyBpcyBhIG5ldyBzZWNyZXQgY29udGVudC4="),
 				),
 			},
 		},
