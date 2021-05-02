@@ -2,33 +2,22 @@ package jenkins
 
 import (
 	"context"
-	"encoding/xml"
 	"fmt"
 	"strings"
 
+	jenkins "github.com/bndr/gojenkins"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// VaultAppRoleCredentials struct representing credential for storing Vault AppRole role id and secret id
-type VaultAppRoleCredentials struct {
-	XMLName     xml.Name `xml:"com.datapipe.jenkins.vault.credentials.VaultAppRoleCredential"`
-	ID          string   `xml:"id"`
-	Scope       string   `xml:"scope"`
-	Description string   `xml:"description"`
-	Path        string   `xml:"path"`
-	RoleID      string   `xml:"roleId"`
-	SecretID    string   `xml:"secretId"`
-}
-
-func resourceJenkinsCredentialVaultAppRole() *schema.Resource {
+func resourceJenkinsCredentialSecretFile() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceJenkinsCredentialVaultAppRoleCreate,
-		ReadContext:   resourceJenkinsCredentialVaultAppRoleRead,
-		UpdateContext: resourceJenkinsCredentialVaultAppRoleUpdate,
-		DeleteContext: resourceJenkinsCredentialVaultAppRoleDelete,
+		CreateContext: resourceJenkinsCredentialSecretFileCreate,
+		ReadContext:   resourceJenkinsCredentialSecretFileRead,
+		UpdateContext: resourceJenkinsCredentialSecretFileUpdate,
+		DeleteContext: resourceJenkinsCredentialSecretFileDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceJenkinsCredentialVaultAppRoleImport,
+			StateContext: resourceJenkinsCredentialSecretFileImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -64,61 +53,54 @@ func resourceJenkinsCredentialVaultAppRole() *schema.Resource {
 				Optional:    true,
 				Default:     "Managed by Terraform",
 			},
-			"path": {
+			"filename": {
 				Type:        schema.TypeString,
-				Description: "Path of the roles approle backend.",
-				Optional:    true,
-				Default:     "approle",
-			},
-			"role_id": {
-				Type:        schema.TypeString,
-				Description: "The roles role_id.",
+				Description: "Jenkins side filename.",
 				Required:    true,
 			},
-			"secret_id": {
+			"secretbytes": {
 				Type:        schema.TypeString,
-				Description: "The roles secret_id. If left empty will be unmanaged.",
-				Optional:    true,
+				Description: "Base64 encoded secret file content.",
+				Required:    true,
 				Sensitive:   true,
 			},
 		},
 	}
 }
 
-func resourceJenkinsCredentialVaultAppRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretFileCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(jenkinsClient)
 	cm := client.Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
-	// return diag.FromErr(fmt.Errorf("invalid folder name '%s', '%s'", cm.Folder, d.Get("folder").(string)))
+
 	// Validate that the folder exists
 	if err := folderExists(ctx, client, cm.Folder); err != nil {
 		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
 	}
 
-	cred := VaultAppRoleCredentials{
+	cred := jenkins.FileCredentials{
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-		Path:        d.Get("path").(string),
-		RoleID:      d.Get("role_id").(string),
-		SecretID:    d.Get("secret_id").(string),
+		Filename:    d.Get("filename").(string),
+		SecretBytes: d.Get("secretbytes").(string),
 	}
 
 	domain := d.Get("domain").(string)
 	err := cm.Add(ctx, domain, cred)
 	if err != nil {
-		return diag.Errorf("Could not create vault approle credentials: %s", err)
+		return diag.Errorf("Could not create secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialVaultAppRoleRead(ctx, d, meta)
+	return resourceJenkinsCredentialSecretFileRead(ctx, d, meta)
 }
 
-func resourceJenkinsCredentialVaultAppRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretFileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
-	cred := VaultAppRoleCredentials{}
+	cred := jenkins.FileCredentials{}
 	err := cm.GetSingle(
 		ctx,
 		d.Get("domain").(string),
@@ -133,48 +115,42 @@ func resourceJenkinsCredentialVaultAppRoleRead(ctx context.Context, d *schema.Re
 			return nil
 		}
 
-		return diag.Errorf("Could not read vault approle credentials: %s", err)
+		return diag.Errorf("Could not read secret text credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	d.Set("scope", cred.Scope)
 	d.Set("description", cred.Description)
-	d.Set("path", cred.Path)
-	d.Set("role_id", cred.RoleID)
-	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
-	// Password only applies to Create/Update operations if the "password" property is non-empty
+	d.Set("filename", cred.Filename)
+	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
+	// Secret only applies to Create/Update operations if the "password" property is non-empty
 
 	return nil
 }
 
-func resourceJenkinsCredentialVaultAppRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretFileUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	domain := d.Get("domain").(string)
-	cred := VaultAppRoleCredentials{
+	cred := jenkins.FileCredentials{
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-		Path:        d.Get("path").(string),
-		RoleID:      d.Get("role_id").(string),
-	}
-
-	// Only enforce the password if it is non-empty
-	if d.Get("secret_id").(string) != "" {
-		cred.SecretID = d.Get("secret_id").(string)
+		Filename:    d.Get("filename").(string),
+		SecretBytes: d.Get("secretbytes").(string),
 	}
 
 	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update vault approle credentials: %s", err)
+		return diag.Errorf("Could not update secret text: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialVaultAppRoleRead(ctx, d, meta)
+	return resourceJenkinsCredentialSecretFileRead(ctx, d, meta)
 }
 
-func resourceJenkinsCredentialVaultAppRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceJenkinsCredentialSecretFileDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cm := meta.(jenkinsClient).Credentials()
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
@@ -190,7 +166,7 @@ func resourceJenkinsCredentialVaultAppRoleDelete(ctx context.Context, d *schema.
 	return nil
 }
 
-func resourceJenkinsCredentialVaultAppRoleImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceJenkinsCredentialSecretFileImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	ret := []*schema.ResourceData{d}
 
 	splitID := strings.Split(d.Id(), "/")
