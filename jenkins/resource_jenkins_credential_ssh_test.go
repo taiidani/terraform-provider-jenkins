@@ -44,20 +44,20 @@ func TestAccJenkinsCredentialSSH_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "privatekey", "Some other fake private key"),
 				),
 			},
-                        {
-                                // Update by changing adding passphrase
-                                Config: `
+			{
+				// Update by changing adding passphrase
+				Config: `
                                 resource jenkins_credential_ssh foo {
                                   name = "test-ssh"
                                   username = "test-ssh-user"
                                   privatekey = "Some other fake private key"
 				  passphrase = "SuperSecret"
                                 }`,
-                                Check: resource.ComposeTestCheckFunc(
-                                        testAccCheckJenkinsCredentialSSHExists("jenkins_credential_ssh.foo", &cred),
-                                        resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "passphrase", "SuperSecret"),
-                                ),
-                        },
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialSSHExists("jenkins_credential_ssh.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "passphrase", "SuperSecret"),
+				),
+			},
 		},
 	})
 }
@@ -132,9 +132,9 @@ func TestAccJenkinsCredentialSSH_folder(t *testing.T) {
 					resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "privatekey", "Some other fake private key"),
 				),
 			},
-                        {
-                                // Update by changing privatekey
-                                Config: fmt.Sprintf(`
+			{
+				// Update by changing privatekey
+				Config: fmt.Sprintf(`
                                 resource jenkins_folder foo {
                                         name = "tf-acc-test-%s"
                                         description = "Terraform acceptance testing"
@@ -161,11 +161,11 @@ func TestAccJenkinsCredentialSSH_folder(t *testing.T) {
                                   privatekey = "Some other fake private key"
 				  passphrase = "SuperSecret"
                                 }`, randString),
-                                Check: resource.ComposeTestCheckFunc(
-                                        testAccCheckJenkinsCredentialSSHExists("jenkins_credential_ssh.foo", &cred),
-                                        resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "passphrase", "SuperSecret"),
-                                ),
-                        },
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialSSHExists("jenkins_credential_ssh.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_ssh.foo", "passphrase", "SuperSecret"),
+				),
+			},
 		},
 	})
 }
