@@ -19,20 +19,20 @@ func TestAccJenkinsJobDataSource_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-				resource jenkins_job foo {
-					name = "tf-acc-test-%s"
-					template = <<EOT
-				  `+string(xml)+`
-				  EOT
+resource jenkins_job foo {
+	name = "tf-acc-test-%s"
+	template = <<EOT
+`+string(xml)+`
+EOT
 
-					parameters = {
-						description = "Acceptance testing Jenkins provider"
-					}
-				}
+	parameters = {
+		description = "Acceptance testing Jenkins provider"
+	}
+}
 
-				data jenkins_job foo {
-					name = jenkins_job.foo.name
-				}`, randString),
+data jenkins_job foo {
+	name = jenkins_job.foo.name
+}`, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
@@ -53,26 +53,26 @@ func TestAccJenkinsJobDataSource_nested(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-				resource jenkins_folder foo {
-					name = "tf-acc-test-%s"
-				}
+resource jenkins_folder foo {
+	name = "tf-acc-test-%s"
+}
 
-				resource jenkins_job sub {
-					name = "subfolder"
-					folder = jenkins_folder.foo.id
-					template = <<EOT
-				  `+string(xml)+`
-				  EOT
+resource jenkins_job sub {
+	name = "subfolder"
+	folder = jenkins_folder.foo.id
+	template = <<EOT
+`+string(xml)+`
+EOT
 
-					parameters = {
-						description = "Acceptance testing Jenkins provider"
-					}
-				}
+	parameters = {
+		description = "Acceptance testing Jenkins provider"
+	}
+}
 
-				data jenkins_job sub {
-					name = jenkins_job.sub.name
-					folder = jenkins_job.sub.folder
-				}`, randString),
+data jenkins_job sub {
+	name = jenkins_job.sub.name
+	folder = jenkins_job.sub.folder
+}`, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
