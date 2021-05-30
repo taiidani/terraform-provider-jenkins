@@ -26,16 +26,16 @@ func TestAccJenkinsJob_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-				resource jenkins_job foo {
-				  name = "tf-acc-test-%s"
-				  template = <<EOT
-				`+string(xml)+`
-				EOT
+resource jenkins_job foo {
+	name = "tf-acc-test-%s"
+	template = <<EOT
+`+string(xml)+`
+EOT
 
-				  parameters = {
-					  description = "Acceptance testing Jenkins provider"
-				  }
-				}`, randString),
+	parameters = {
+		description = "Acceptance testing Jenkins provider"
+	}
+}`, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_job.foo", "name", "tf-acc-test-"+randString),
@@ -56,22 +56,22 @@ func TestAccJenkinsJob_nested(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-				resource jenkins_folder foo {
-					name = "tf-acc-test-%s"
-					description = "Terraform acceptance tests %s"
-				}
+resource jenkins_folder foo {
+	name = "tf-acc-test-%s"
+	description = "Terraform acceptance tests %s"
+}
 
-				resource jenkins_job sub {
-					name = "subfolder"
-					folder = jenkins_folder.foo.id
-					template = <<EOT
-				  `+string(xml)+`
-				  EOT
+resource jenkins_job sub {
+	name = "subfolder"
+	folder = jenkins_folder.foo.id
+	template = <<EOT
+`+string(xml)+`
+EOT
 
-					parameters = {
-						description = "Acceptance testing Jenkins provider"
-					}
-				}`, randString, randString),
+parameters = {
+	description = "Acceptance testing Jenkins provider"
+}
+}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
