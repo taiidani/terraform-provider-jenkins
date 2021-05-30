@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -78,10 +79,11 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	new, _ = renderTemplate(new, d)
 
 	// Sanitize the XML entries to prevent inadvertent inequalities
-	old = strings.Replace(old, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "", -1)
+	re := regexp.MustCompile(`<\?xml.+\?>`)
+	old = re.ReplaceAllString(old, "")
 	old = strings.Replace(old, " ", "", -1)
 	old = strings.TrimSpace(old)
-	new = strings.Replace(new, "<?new version=\"1.0\" encoding=\"UTF-8\"?>", "", -1)
+	new = re.ReplaceAllString(new, "")
 	new = strings.Replace(new, " ", "", -1)
 	new = strings.TrimSpace(new)
 

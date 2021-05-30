@@ -2,8 +2,8 @@ package jenkins
 
 import (
 	"bytes"
-	"html/template"
 	"log"
+	"text/template"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
