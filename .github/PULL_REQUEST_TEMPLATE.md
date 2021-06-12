@@ -8,6 +8,9 @@
 
 # Test Steps
 
+- [ ] Have you updated the `docs/` folder to match your change?
+- [ ] Have you exercised your change using the `examples/` docker compose setup?
+
 ```sh
 make testacc
 ```
