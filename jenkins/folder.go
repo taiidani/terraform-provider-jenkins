@@ -9,6 +9,7 @@ import (
 type folder struct {
 	XMLName       xml.Name         `xml:"com.cloudbees.hudson.plugins.folder.Folder"`
 	Description   string           `xml:"description"`
+	DisplayName   string           `xml:"displayName"`
 	Properties    folderProperties `xml:"properties"`
 	FolderViews   xmlRawProperty   `xml:"folderViews"`
 	HealthMetrics xmlRawProperty   `xml:"healthMetrics"`
