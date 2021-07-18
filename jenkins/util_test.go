@@ -86,7 +86,7 @@ func TestTemplateDiff(t *testing.T) {
 	// Set up Job
 	job := resourceJenkinsFolder()
 	bag := job.TestResourceData()
-	bag.Set("description", "Case")
+	_ = bag.Set("description", "Case")
 
 	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
 		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)

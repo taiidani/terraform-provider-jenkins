@@ -133,8 +133,8 @@ func resourceJenkinsCredentialSSHRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	d.Set("scope", cred.Scope)
-	d.Set("description", cred.Description)
+	_ = d.Set("scope", cred.Scope)
+	_ = d.Set("description", cred.Description)
 	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
 	// Secret only applies to Create/Update operations if the "password" property is non-empty
 
@@ -197,13 +197,13 @@ func resourceJenkinsCredentialSSHImport(ctx context.Context, d *schema.ResourceD
 	}
 
 	name := splitID[len(splitID)-1]
-	d.Set("name", name)
+	_ = d.Set("name", name)
 
 	domain := splitID[len(splitID)-2]
-	d.Set("domain", domain)
+	_ = d.Set("domain", domain)
 
 	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	d.Set("folder", folder)
+	_ = d.Set("folder", folder)
 
 	d.SetId(generateCredentialID(folder, name))
 	return ret, nil
