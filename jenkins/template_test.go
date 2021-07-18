@@ -12,8 +12,8 @@ func TestRenderTemplate(t *testing.T) {
 	// Set up Job
 	job := resourceJenkinsJob()
 	d := job.TestResourceData()
-	d.Set("name", "Test Name")
-	d.Set("parameters", map[string]string{"Param": "Test"})
+	_ = d.Set("name", "Test Name")
+	_ = d.Set("parameters", map[string]string{"Param": "Test"})
 
 	// Test simple
 	if actual, err := renderTemplate(input, d); err != nil {
@@ -52,7 +52,7 @@ func TestRenderTemplateInvalid(t *testing.T) {
 	// Set up Job
 	job := resourceJenkinsJob()
 	d := job.TestResourceData()
-	d.Set("name", "Test Name")
+	_ = d.Set("name", "Test Name")
 
 	// Now an invalid template
 	input := "i am invalid{{ end }}"

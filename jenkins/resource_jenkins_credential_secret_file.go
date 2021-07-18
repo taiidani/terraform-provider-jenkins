@@ -119,9 +119,9 @@ func resourceJenkinsCredentialSecretFileRead(ctx context.Context, d *schema.Reso
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	d.Set("scope", cred.Scope)
-	d.Set("description", cred.Description)
-	d.Set("filename", cred.Filename)
+	_ = d.Set("scope", cred.Scope)
+	_ = d.Set("description", cred.Description)
+	_ = d.Set("filename", cred.Filename)
 	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
 	// Secret only applies to Create/Update operations if the "password" property is non-empty
 
@@ -175,13 +175,13 @@ func resourceJenkinsCredentialSecretFileImport(ctx context.Context, d *schema.Re
 	}
 
 	name := splitID[len(splitID)-1]
-	d.Set("name", name)
+	_ = d.Set("name", name)
 
 	domain := splitID[len(splitID)-2]
-	d.Set("domain", domain)
+	_ = d.Set("domain", domain)
 
 	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	d.Set("folder", folder)
+	_ = d.Set("folder", folder)
 
 	d.SetId(generateCredentialID(folder, name))
 	return ret, nil
