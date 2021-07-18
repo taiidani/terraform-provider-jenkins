@@ -22,7 +22,31 @@ func TestAccJenkinsFolder_basic(t *testing.T) {
 				Config: fmt.Sprintf(`
 				resource jenkins_folder foo {
 				  name = "tf-acc-test-%s"
-                  display_name = "TF Acceptance Test %s"
+				  description = "Terraform acceptance tests %s"
+				}`, randString, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "display_name", ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsFolder_withDisplayName(t *testing.T) {
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+				  name = "tf-acc-test-%s"
+				  display_name = "TF Acceptance Test %s"
 				  description = "Terraform acceptance tests %s"
 				}`, randString, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
