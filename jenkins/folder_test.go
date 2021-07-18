@@ -23,6 +23,7 @@ func Test_parseFolder(t *testing.T) {
 				def: `<com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.15">
   <actions/>
   <description>Example Description</description>
+  <displayName>Example Display Name</displayName>
   <properties>
     <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
       <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
@@ -87,6 +88,7 @@ func Test_parseFolder(t *testing.T) {
 			want: &folder{
 				XMLName:     xml.Name{Local: "com.cloudbees.hudson.plugins.folder.Folder"},
 				Description: "Example Description",
+				DisplayName: "Example Display Name",
 				Properties: folderProperties{
 					Security: &folderSecurity{
 						InheritanceStrategy: folderPermissionInheritanceStrategy{
@@ -190,6 +192,7 @@ func Test_parseFolder(t *testing.T) {
 func Test_folder_Render(t *testing.T) {
 	type fields struct {
 		Description string
+		DisplayName string
 		Properties  folderProperties
 	}
 	tests := []struct {
@@ -202,6 +205,7 @@ func Test_folder_Render(t *testing.T) {
 			name: "success",
 			fields: fields{
 				Description: "Example Description",
+				DisplayName: "Example Display Name",
 				Properties: folderProperties{
 					Security: &folderSecurity{
 						Permission: []string{"example", "permission"},
@@ -229,6 +233,7 @@ func Test_folder_Render(t *testing.T) {
 			},
 			want: []byte(`<com.cloudbees.hudson.plugins.folder.Folder>
 	<description>Example Description</description>
+    <displayName>Example Display Name</displayName>
 	<properties>
 		<com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
       <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"></inheritanceStrategy>
@@ -255,6 +260,7 @@ func Test_folder_Render(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			j := &folder{
 				Description: tt.fields.Description,
+				DisplayName: tt.fields.DisplayName,
 				Properties:  tt.fields.Properties,
 			}
 			got, err := j.Render()

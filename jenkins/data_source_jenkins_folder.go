@@ -17,6 +17,11 @@ func dataSourceJenkinsFolder() *schema.Resource {
 				Required:         true,
 				ValidateDiagFunc: validateJobName,
 			},
+			"display_name": {
+				Type:        schema.TypeString,
+				Description: "The name of the folder to display in the UI.",
+				Computed:    true,
+			},
 			"folder": {
 				Type:             schema.TypeString,
 				Description:      "The folder namespace that the folder exists in.",

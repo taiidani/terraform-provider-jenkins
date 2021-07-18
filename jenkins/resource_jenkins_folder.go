@@ -27,6 +27,11 @@ func resourceJenkinsFolder() *schema.Resource {
 				ForceNew:         true,
 				ValidateDiagFunc: validateJobName,
 			},
+			"display_name": {
+				Type:        schema.TypeString,
+				Description: "The name of the folder to display in the UI.",
+				Optional:    true,
+			},
 			"folder": {
 				Type:             schema.TypeString,
 				Description:      "The folder namespace that the folder will be added to as a subfolder.",
@@ -83,6 +88,7 @@ func resourceJenkinsFolderCreate(ctx context.Context, d *schema.ResourceData, me
 
 	f := folder{
 		Description: d.Get("description").(string),
+		DisplayName: d.Get("display_name").(string),
 	}
 	f.Properties.Security = expandSecurity(d.Get("security").(*schema.Set).List())
 
@@ -143,6 +149,10 @@ func resourceJenkinsFolderRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("display_name", f.DisplayName); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("folder", formatFolderID(folders)); err != nil {
 		return diag.FromErr(err)
 	}
@@ -182,6 +192,7 @@ func resourceJenkinsFolderUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	// Then update the values
 	f.Description = d.Get("description").(string)
+	f.DisplayName = d.Get("display_name").(string)
 	f.Properties.Security = expandSecurity(d.Get("security").(*schema.Set).List())
 
 	// And send it back to Jenkins
