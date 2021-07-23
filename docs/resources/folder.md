@@ -33,6 +33,7 @@ resource "jenkins_folder" "example_child" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the folder being created.
+* `display_name` - (Optional) The name of the folder to be displayed in the UI.
 * `folder` - (Optional) The folder namespace to store the subfolder in. If creating in a nested folder structure you may separate folder names with `/`, such as `parent/child`. This name cannot be changed once the folder has been created, and all parent folders must be created in advance.
 * `description` - (Optional) A block of text describing the folder's purpose.
 * `security` - (Optional) An optional block defining a project-based authorization strategy, documented below.
