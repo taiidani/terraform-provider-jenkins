@@ -49,5 +49,3 @@ signs:
       - "${artifact}"
 release:
   draft: false
-changelog:
-  skip: true
