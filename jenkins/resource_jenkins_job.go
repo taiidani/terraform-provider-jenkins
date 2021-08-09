@@ -16,6 +16,9 @@ func resourceJenkinsJob() *schema.Resource {
 		ReadContext:   resourceJenkinsJobRead,
 		UpdateContext: resourceJenkinsJobUpdate,
 		DeleteContext: resourceJenkinsJobDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:             schema.TypeString,

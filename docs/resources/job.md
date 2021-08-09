@@ -66,3 +66,11 @@ The following arguments are supported:
 ## Attribute Reference
 
 All arguments above are exported.
+
+## Import
+
+Jobs may be imported by their canonical name, e.g.
+
+```sh
+$ terraform import jenkins_job.example /job/job-name
+```
