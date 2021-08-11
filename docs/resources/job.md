@@ -74,3 +74,5 @@ Jobs may be imported by their canonical name, e.g.
 ```sh
 $ terraform import jenkins_job.example /job/job-name
 ```
+
+Please note that in some cases, the imported XML may not fully match the template you are specifying in your resource, therefore please run a `terraform plan`, and if there are any template XML changes, run `terraform apply` to ensure your Terraform state file is fully in sync.
