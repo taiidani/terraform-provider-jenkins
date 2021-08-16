@@ -17,7 +17,7 @@ func TestValidateJobName(t *testing.T) {
 
 	// Test if we fail when we should
 	input = "job_name/second_level"
-	actual = validateCredentialScope(input, ctyPath)
+	actual = validateJobName(input, ctyPath)
 	if !actual.HasError() {
 		t.Errorf("Error, validation failed for input: %s", input)
 	}
