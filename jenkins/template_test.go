@@ -53,6 +53,7 @@ func TestRenderTemplateInvalid(t *testing.T) {
 	job := resourceJenkinsJob()
 	d := job.TestResourceData()
 	_ = d.Set("name", "Test Name")
+	_ = d.Set("parameters", map[string]string{"Param": "Test"})
 
 	// Now an invalid template
 	input := "i am invalid{{ end }}"
