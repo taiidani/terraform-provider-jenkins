@@ -109,6 +109,24 @@ func TestTemplateDiff(t *testing.T) {
 	}
 }
 
+func TestTemplateDiff_HTMLEntities(t *testing.T) {
+	job := resourceJenkinsFolder()
+	bag := job.TestResourceData()
+	_ = bag.Set("description", "Case")
+
+	inputLeft := "<root>&apos;/&apos;</root>"
+	inputRight := "<root>'/'</root>"
+	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
+		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
+	}
+
+	inputLeft = "<root>'/'</root>"
+	inputRight = "<root>&apos;/&apos;</root>"
+	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
+		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
+	}
+}
+
 func TestGenerateCredentialID(t *testing.T) {
 	inputFolder, inputName := "test-folder", "test-name"
 	actual := generateCredentialID(inputFolder, inputName)
