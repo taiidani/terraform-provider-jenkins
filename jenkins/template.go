@@ -17,7 +17,16 @@ type job struct {
 	Parameters  map[string]string
 }
 
+// renderTemplate will render the given XML template based on parameters in the resource bag
+// Deprecated: Once the 'parameters' property has been removed from jenkins_job, this function
+// does not need to be called.
 func renderTemplate(data string, d *schema.ResourceData) (string, error) {
+	// Return early if we have no parameters to render
+	if _, ok := d.GetOk("parameters"); !ok {
+		log.Printf("[DEBUG] jenkins::xml - Skipping template render due to no parameters:\n%s", data)
+		return data, nil
+	}
+
 	log.Printf("[DEBUG] jenkins::xml - Binding template:\n%s", data)
 
 	// create and parse the config.xml template
@@ -32,15 +41,6 @@ func renderTemplate(data string, d *schema.ResourceData) (string, error) {
 	j := &job{
 		Name:       d.Get("name").(string),
 		Parameters: map[string]string{},
-	}
-	if value, ok := d.GetOk("description"); ok {
-		j.Description = value.(string)
-	}
-	if value, ok := d.GetOk("permissions"); ok {
-		value := value.(*schema.Set)
-		for _, v := range value.List() {
-			j.Permissions = append(j.Permissions, v.(string))
-		}
 	}
 	if value, ok := d.GetOk("parameters"); ok {
 		value := value.(map[string]interface{})

@@ -2,9 +2,12 @@ package jenkins
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
-	"io/ioutil"
+	"os"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
@@ -15,8 +18,46 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+var (
+	//go:embed "resource_jenkins_job_test.xml"
+	testXML []byte
+
+	//go:embed "resource_jenkins_job_test_parameterized.xml"
+	testXMLParameterized string
+
+	//go:embed "resource_jenkins_job_test_want.xml"
+	testXMLWant string
+)
+
 func TestAccJenkinsJob_basic(t *testing.T) {
-	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
+	testDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(testDir, "test.xml"), testXML, 0644)
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsJobDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource jenkins_job foo {
+	name = "tf-acc-test-%s"
+	template = templatefile("%s/test.xml", {
+		description = "Acceptance testing Jenkins provider"
+	})
+}`, randString, testDir),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "template", strings.TrimSpace(testXMLWant)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsJob_basic_parameterized(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
@@ -29,16 +70,17 @@ func TestAccJenkinsJob_basic(t *testing.T) {
 resource jenkins_job foo {
 	name = "tf-acc-test-%s"
 	template = <<EOT
-`+string(xml)+`
+%s
 EOT
 
 	parameters = {
 		description = "Acceptance testing Jenkins provider"
 	}
-}`, randString),
+}`, randString, testXMLParameterized),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_job.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "template", strings.TrimSpace(testXMLWant)),
 				),
 			},
 		},
@@ -46,7 +88,43 @@ EOT
 }
 
 func TestAccJenkinsJob_nested(t *testing.T) {
-	xml, _ := ioutil.ReadFile("resource_jenkins_job_test.xml")
+	testDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(testDir, "test.xml"), testXML, 0644)
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource jenkins_folder foo {
+	name = "tf-acc-test-%s"
+	description = "Terraform acceptance tests %s"
+}
+
+resource jenkins_job sub {
+	name = "subfolder"
+	folder = jenkins_folder.foo.id
+	template = templatefile("%s/test.xml", {
+		description = "Acceptance testing Jenkins provider"
+	})
+}`, randString, randString, testDir),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "name", "subfolder"),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "folder", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "template", strings.TrimSpace(testXMLWant)),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsJob_nested_parameterized(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
@@ -65,19 +143,20 @@ resource jenkins_job sub {
 	name = "subfolder"
 	folder = jenkins_folder.foo.id
 	template = <<EOT
-`+string(xml)+`
+%s
 EOT
 
 parameters = {
 	description = "Acceptance testing Jenkins provider"
 }
-}`, randString, randString),
+}`, randString, randString, testXMLParameterized),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_folder.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_folder.foo", "name", "tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "name", "subfolder"),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "folder", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.sub", "template", strings.TrimSpace(testXMLWant)),
 				),
 			},
 		},
