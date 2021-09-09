@@ -1,6 +1,6 @@
 module github.com/taiidani/terraform-provider-jenkins
 
-go 1.15
+go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.30.12 // indirect

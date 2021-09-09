@@ -44,6 +44,7 @@ func resourceJenkinsJob() *schema.Resource {
 				Type:        schema.TypeMap,
 				Description: "The set of parameters to be rendered in the template when generating a valid config.xml file.",
 				Optional:    true,
+				Deprecated:  "Use the built-in templatefile function to render your parameters in the future.",
 				Elem:        schema.TypeString,
 			},
 		},

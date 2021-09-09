@@ -81,12 +81,11 @@ func TestParseCanonicalJobID(t *testing.T) {
 func TestTemplateDiff(t *testing.T) {
 	// Set up inputs
 	inputLeft := "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>Test Case</root>"
-	inputRight := "<root>Test {{ .Description }}</root>"
+	inputRight := "<root>Test Case</root>"
 
 	// Set up Job
-	job := resourceJenkinsFolder()
+	job := resourceJenkinsJob()
 	bag := job.TestResourceData()
-	_ = bag.Set("description", "Case")
 
 	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
 		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
