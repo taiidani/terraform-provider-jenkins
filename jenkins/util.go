@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"html"
 	"log"
 	"regexp"
 	"strings"
@@ -83,9 +84,11 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	old = re.ReplaceAllString(old, "")
 	old = strings.Replace(old, " ", "", -1)
 	old = strings.TrimSpace(old)
+	old = html.UnescapeString(old)
 	new = re.ReplaceAllString(new, "")
 	new = strings.Replace(new, " ", "", -1)
 	new = strings.TrimSpace(new)
+	new = html.UnescapeString(new)
 
 	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
 	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
