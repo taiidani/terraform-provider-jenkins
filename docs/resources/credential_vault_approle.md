@@ -25,6 +25,7 @@ The following arguments are supported:
 * `folder` - (Optional) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
 * `scope` - (Optional) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 * `description` - (Optional) A human readable description of the credentials being stored.
+* `namespace` - (Optional) The Vault namespace of the approle credential.
 * `path` - (Optional) The unique name of the approle auth backend. Defaults to `approle`.
 * `role_id` - (Required) The role_id to be associated with the credentials.
 * `secret_id` - (Optional) The secret_id to be associated with the credentials. If empty then the secret_id property will become unmanaged and expected to be set manually within Jenkins. If set then the secret_id will be updated only upon changes -- if the secret_id is set manually within Jenkins then it will not reconcile this drift until the next time the secret_id property is changed.
