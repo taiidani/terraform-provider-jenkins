@@ -69,7 +69,6 @@ func resourceJenkinsCredentialVaultAppRole() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "Namespace of the roles approle backend.",
 				Optional:    true,
-				Default:     "",
 			},
 			"path": {
 				Type:        schema.TypeString,

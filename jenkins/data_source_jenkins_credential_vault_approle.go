@@ -36,6 +36,11 @@ func dataSourceJenkinsCredentialVaultAppRole() *schema.Resource {
 				Description: "The credentials descriptive text.",
 				Computed:    true,
 			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Description: "Namespace of the roles approle backend.",
+				Optional:    true,
+			},
 			"path": {
 				Type:        schema.TypeString,
 				Description: "Path of the roles approle backend.",
