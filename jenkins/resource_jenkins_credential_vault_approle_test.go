@@ -24,6 +24,7 @@ func TestAccJenkinsCredentialVaultAppRole_basic(t *testing.T) {
 				  name = "test-approle"
 				  role_id = "foo"
 				  secret_id = "bar"
+				  namespace = "my-namespace"
 				}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/test-approle"),
