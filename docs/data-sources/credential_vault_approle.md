@@ -27,5 +27,6 @@ In addition to all arguments above, the following attributes are exported:
 * `id` - The full canonical job path, E.G. `/job/job-name`.
 * `description` - A human readable description of the credentials being stored.
 * `scope` - The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM".
+* `namespace` - The Vault namespace of the approle credential.
 * `path` - The unique name of the approle auth backend. Defaults to `approle`.
 * `role_id` - The role_id to be associated with the credentials.

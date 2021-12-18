@@ -16,6 +16,7 @@ type VaultAppRoleCredentials struct {
 	ID          string   `xml:"id"`
 	Scope       string   `xml:"scope"`
 	Description string   `xml:"description"`
+	Namespace   string   `xml:"namespace"`
 	Path        string   `xml:"path"`
 	RoleID      string   `xml:"roleId"`
 	SecretID    string   `xml:"secretId"`
@@ -64,6 +65,11 @@ func resourceJenkinsCredentialVaultAppRole() *schema.Resource {
 				Optional:    true,
 				Default:     "Managed by Terraform",
 			},
+			"namespace": {
+				Type:        schema.TypeString,
+				Description: "Namespace of the roles approle backend.",
+				Optional:    true,
+			},
 			"path": {
 				Type:        schema.TypeString,
 				Description: "Path of the roles approle backend.",
@@ -99,6 +105,7 @@ func resourceJenkinsCredentialVaultAppRoleCreate(ctx context.Context, d *schema.
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
+		Namespace:   d.Get("namespace").(string),
 		Path:        d.Get("path").(string),
 		RoleID:      d.Get("role_id").(string),
 		SecretID:    d.Get("secret_id").(string),
@@ -139,6 +146,7 @@ func resourceJenkinsCredentialVaultAppRoleRead(ctx context.Context, d *schema.Re
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
 	_ = d.Set("scope", cred.Scope)
 	_ = d.Set("description", cred.Description)
+	_ = d.Set("namespace", cred.Namespace)
 	_ = d.Set("path", cred.Path)
 	_ = d.Set("role_id", cred.RoleID)
 	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
@@ -156,6 +164,7 @@ func resourceJenkinsCredentialVaultAppRoleUpdate(ctx context.Context, d *schema.
 		ID:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
+		Namespace:   d.Get("namespace").(string),
 		Path:        d.Get("path").(string),
 		RoleID:      d.Get("role_id").(string),
 	}

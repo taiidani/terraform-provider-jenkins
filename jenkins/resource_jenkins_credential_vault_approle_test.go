@@ -48,6 +48,130 @@ func TestAccJenkinsCredentialVaultAppRole_basic(t *testing.T) {
 	})
 }
 
+func TestAccJenkinsCredentialVaultAppRole_basic_namespaced(t *testing.T) {
+	var cred VaultAppRoleCredentials
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckJenkinsCredentialVaultAppRoleDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+				resource jenkins_credential_vault_approle foo {
+				  name = "test-approle"
+				  role_id = "foo"
+				  secret_id = "bar"
+				  namespace = "my-namespace"
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/test-approle"),
+					testAccCheckJenkinsCredentialVaultAppRoleExists("jenkins_credential_vault_approle.foo", &cred),
+				),
+			},
+			{
+				// Update by adding description
+				Config: `
+				resource jenkins_credential_vault_approle foo {
+				  name = "test-approle"
+				  description = "new-description"
+				  namespace = "my-namespace"
+				  role_id = "foo"
+				  secret_id = "bar"
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialVaultAppRoleExists("jenkins_credential_vault_approle.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "description", "new-description"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsCredentialVaultAppRole_folder_namespaced(t *testing.T) {
+	var cred VaultAppRoleCredentials
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckJenkinsCredentialVaultAppRoleDestroy,
+			testAccCheckJenkinsFolderDestroy,
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+					name = "tf-acc-test-%s"
+					description = "Terraform acceptance testing"
+
+					lifecycle {
+						ignore_changes = [template]
+					}
+				}
+
+				resource jenkins_folder foo_sub {
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
+					description = "Terraform acceptance testing"
+
+					lifecycle {
+						ignore_changes = [template]
+					}
+				}
+
+				resource jenkins_credential_vault_approle foo {
+				  name = "test-approle"
+				  folder = jenkins_folder.foo_sub.id
+				  role_id = "foo"
+				  secret_id = "bar"
+				  namespace = "my-namespace"
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/job/tf-acc-test-"+randString+"/job/subfolder/test-approle"),
+					testAccCheckJenkinsCredentialVaultAppRoleExists("jenkins_credential_vault_approle.foo", &cred),
+				),
+			},
+			{
+				// Update by adding description
+				Config: fmt.Sprintf(`
+				resource jenkins_folder foo {
+					name = "tf-acc-test-%s"
+					description = "Terraform acceptance testing"
+
+					lifecycle {
+						ignore_changes = [template]
+					}
+				}
+
+				resource jenkins_folder foo_sub {
+					name = "subfolder"
+					folder = jenkins_folder.foo.id
+					description = "Terraform acceptance testing"
+
+					lifecycle {
+						ignore_changes = [template]
+					}
+				}
+
+				resource jenkins_credential_vault_approle foo {
+				  name = "test-approle"
+				  folder = jenkins_folder.foo_sub.id
+				  description = "new-description"
+				  role_id = "foo"
+				  secret_id = "bar"
+				  namespace = "my-namespace"
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialVaultAppRoleExists("jenkins_credential_vault_approle.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "description", "new-description"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccJenkinsCredentialVaultAppRole_folder(t *testing.T) {
 	var cred VaultAppRoleCredentials
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
