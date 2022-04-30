@@ -2,7 +2,6 @@
 
 ![Unit Tests](https://github.com/taiidani/terraform-provider-jenkins/workflows/Unit%20Tests/badge.svg)
 ![Acceptance Tests](https://github.com/taiidani/terraform-provider-jenkins/workflows/Acceptance%20Tests/badge.svg)
-[![codecov](https://codecov.io/gh/taiidani/terraform-provider-jenkins/branch/main/graph/badge.svg)](https://codecov.io/gh/taiidani/terraform-provider-jenkins)
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)

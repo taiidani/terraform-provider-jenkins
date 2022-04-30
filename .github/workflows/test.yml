@@ -33,8 +33,10 @@ jobs:
       - name: Test
         run: go test -race -covermode=atomic -coverprofile=coverage.txt ./...
 
-      - name: Send coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash) -Z -f coverage.txt -F unit
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.txt
 
   acceptance:
     runs-on: ubuntu-latest
@@ -66,5 +68,7 @@ jobs:
           JENKINS_PASSWORD: "admin"
         run: go test -v -covermode=atomic -coverprofile=coverage.txt ./...
 
-      - name: Send coverage to Codecov
-        run: bash <(curl -s https://codecov.io/bash) -Z -f coverage.txt -F acceptance
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.txt
