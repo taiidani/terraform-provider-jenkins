@@ -1,6 +1,6 @@
 module github.com/taiidani/terraform-provider-jenkins
 
-go 1.18
+go 1.19
 
 require (
 	github.com/bndr/gojenkins v1.1.1-0.20210407143218-9e2483ff7ebd
