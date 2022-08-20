@@ -3,7 +3,6 @@ package jenkins
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"strings"
 
 	jenkins "github.com/bndr/gojenkins"
@@ -34,7 +33,7 @@ func newJenkinsClient(c *Config) *jenkinsAdapter {
 	client := jenkins.CreateJenkins(nil, c.ServerURL, c.Username, c.Password)
 	if c.CACert != nil {
 		// provide CA certificate if server is using self-signed certificate
-		client.Requester.CACert, _ = ioutil.ReadAll(c.CACert)
+		client.Requester.CACert, _ = io.ReadAll(c.CACert)
 	}
 
 	// return the Jenkins API client
