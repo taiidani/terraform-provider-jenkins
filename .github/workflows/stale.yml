@@ -21,3 +21,4 @@ jobs:
         stale-issue-label: 'no-issue-activity'
         stale-pr-label: 'no-pr-activity'
         days-before-stale: 180
+        exempt-issue-labels: "enhancement"
