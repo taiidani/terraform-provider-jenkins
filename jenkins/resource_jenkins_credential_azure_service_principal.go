@@ -201,10 +201,6 @@ func resourceJenkinsCredentialAzureServicePrincipalRead(ctx context.Context, d *
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
 	_ = d.Set("description", cred.Description)
 	_ = d.Set("scope", cred.Scope)
-	_ = d.Set("description", cred.Description)
-	_ = d.Set("subscription_id", cred.Data.SubscriptionId)
-	_ = d.Set("client_id", cred.Data.ClientId)
-	_ = d.Set("tenant", cred.Data.Tenant)
 
 	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
 	// Password only applies to Create/Update operations if the "password" property is non-empty
@@ -217,18 +213,29 @@ func resourceJenkinsCredentialAzureServicePrincipalUpdate(ctx context.Context, d
 	cm.Folder = formatFolderName(d.Get("folder").(string))
 
 	domain := d.Get("domain").(string)
-	cred := VaultAppRoleCredentials{
-		ID:          d.Get("name").(string),
+
+	credData := AzureServicePrincipalCredentialsData{
+		SubscriptionId:          d.Get("subscription_id").(string),
+		ClientId:                d.Get("client_id").(string),
+		CertificateId:           d.Get("client_certificate").(string),
+		Tenant:                  d.Get("tenant").(string),
+		AzureEnvironmentName:    d.Get("azure_environment_name").(string),
+		ServiceManagementURL:    d.Get("service_management_url").(string),
+		AuthenticationEndpoint:  d.Get("authentication_endpoint").(string),
+		ResourceManagerEndpoint: d.Get("resource_manager_endpoint").(string),
+		GraphEndpoint:           d.Get("graph_endpoint").(string),
+	}
+
+	cred := AzureServicePrincipalCredentials{
+		Id:          d.Get("name").(string),
 		Scope:       d.Get("scope").(string),
 		Description: d.Get("description").(string),
-		Namespace:   d.Get("namespace").(string),
-		Path:        d.Get("path").(string),
-		RoleID:      d.Get("role_id").(string),
+		Data:        credData,
 	}
 
 	// Only enforce the password if it is non-empty
-	if d.Get("secret_id").(string) != "" {
-		cred.SecretID = d.Get("secret_id").(string)
+	if d.Get("client_secret").(string) != "" {
+		cred.Data.ClientSecret = d.Get("client_secret").(string)
 	}
 
 	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
@@ -236,7 +243,7 @@ func resourceJenkinsCredentialAzureServicePrincipalUpdate(ctx context.Context, d
 		return diag.Errorf("Could not update vault approle credentials: %s", err)
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
+	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
 	return resourceJenkinsCredentialAzureServicePrincipalRead(ctx, d, meta)
 }
 
