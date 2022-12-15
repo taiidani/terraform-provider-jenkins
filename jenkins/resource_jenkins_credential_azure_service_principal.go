@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // VaultAppRoleCredentials struct representing credential for storing Vault AppRole role id and secret id
@@ -81,54 +82,56 @@ func resourceJenkinsCredentialAzureServicePrincipal() *schema.Resource {
 			},
 			"client_id": {
 				Type:        schema.TypeString,
-				Description: "The domain namespace that the credentials will be added to.",
+				Description: "The client id (application id) of the Azure Service Principal.",
 				Required:    true,
 			},
 			"client_secret": {
-				Type:        schema.TypeString,
-				Description: "The folder namespace that the credentials will be added to.",
-				Required:    true,
-				Sensitive:   true,
+				Type:         schema.TypeString,
+				Description:  "The client secret of the Azure Service Principal. Cannot be used with client_certificate.",
+				Sensitive:    true,
+				Optional:     true,
+				ExactlyOneOf: []string{"client_secret", "client_certificate"},
 			},
 			"client_certificate": {
-				Type:        schema.TypeString,
-				Description: "The folder namespace that the credentials will be added to.",
-				Optional:    true,
-				Sensitive:   true,
-				Default:     "",
+				Type:         schema.TypeString,
+				Description:  "The certificate reference of the Azure Service Principal, pointing to a Jenkins certificate credential. Cannot be used with client_secret.",
+				Sensitive:    true,
+				Optional:     true,
+				ExactlyOneOf: []string{"client_secret", "client_certificate"},
 			},
 			"tenant": {
 				Type:        schema.TypeString,
-				Description: "The credentials descriptive text.",
+				Description: "The Azure Tenant ID of the Azure Service Principal.",
 				Required:    true,
 			},
 			"azure_environment_name": {
-				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
-				Optional:    true,
-				Default:     "",
+				Type:         schema.TypeString,
+				Description:  `The Azure Cloud enviroment name. Allowed values are "Azure", "Azure China", "Azure Germany", "Azure US Government".`,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{"Azure", "Azure China", "Azure Germany", "Azure US Government"}, false),
+				Default:      "Azure",
 			},
 			"service_management_url": {
 				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
+				Description: "Override the Azure management endpoint URL for the selected Azure environment.",
 				Optional:    true,
 				Default:     "",
 			},
 			"authentication_endpoint": {
 				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
+				Description: "Override the Azure Active Directory endpoint for the selected Azure environment.",
 				Optional:    true,
 				Default:     "",
 			},
 			"resource_manager_endpoint": {
 				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
+				Description: "Override the Azure resource manager endpoint URL for the selected Azure environment.",
 				Optional:    true,
 				Default:     "",
 			},
 			"graph_endpoint": {
 				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
+				Description: "Override the Azure graph endpoint URL for the selected Azure environment.",
 				Optional:    true,
 				Default:     "",
 			},
