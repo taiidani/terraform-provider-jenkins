@@ -87,17 +87,17 @@ func resourceJenkinsCredentialAzureServicePrincipal() *schema.Resource {
 			},
 			"client_secret": {
 				Type:         schema.TypeString,
-				Description:  "The client secret of the Azure Service Principal. Cannot be used with client_certificate.",
+				Description:  "The client secret of the Azure Service Principal. Cannot be used with certificate_id.",
 				Sensitive:    true,
 				Optional:     true,
-				ExactlyOneOf: []string{"client_secret", "client_certificate"},
+				ExactlyOneOf: []string{"client_secret", "certificate_id"},
 			},
-			"client_certificate": {
+			"certificate_id": {
 				Type:         schema.TypeString,
 				Description:  "The certificate reference of the Azure Service Principal, pointing to a Jenkins certificate credential. Cannot be used with client_secret.",
 				Sensitive:    true,
 				Optional:     true,
-				ExactlyOneOf: []string{"client_secret", "client_certificate"},
+				ExactlyOneOf: []string{"client_secret", "certificate_id"},
 			},
 			"tenant": {
 				Type:        schema.TypeString,
@@ -153,7 +153,7 @@ func resourceJenkinsCredentialAzureServicePrincipalCreate(ctx context.Context, d
 		SubscriptionId:          d.Get("subscription_id").(string),
 		ClientId:                d.Get("client_id").(string),
 		ClientSecret:            d.Get("client_secret").(string),
-		CertificateId:           d.Get("client_certificate").(string),
+		CertificateId:           d.Get("certificate_id").(string),
 		Tenant:                  d.Get("tenant").(string),
 		AzureEnvironmentName:    d.Get("azure_environment_name").(string),
 		ServiceManagementURL:    d.Get("service_management_url").(string),
@@ -198,7 +198,7 @@ func resourceJenkinsCredentialAzureServicePrincipalRead(ctx context.Context, d *
 			return nil
 		}
 
-		return diag.Errorf("Could not read vault approle credentials: %s", err)
+		return diag.Errorf("Could not read Azure service principal credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
@@ -220,7 +220,6 @@ func resourceJenkinsCredentialAzureServicePrincipalUpdate(ctx context.Context, d
 	credData := AzureServicePrincipalCredentialsData{
 		SubscriptionId:          d.Get("subscription_id").(string),
 		ClientId:                d.Get("client_id").(string),
-		CertificateId:           d.Get("client_certificate").(string),
 		Tenant:                  d.Get("tenant").(string),
 		AzureEnvironmentName:    d.Get("azure_environment_name").(string),
 		ServiceManagementURL:    d.Get("service_management_url").(string),
@@ -241,9 +240,13 @@ func resourceJenkinsCredentialAzureServicePrincipalUpdate(ctx context.Context, d
 		cred.Data.ClientSecret = d.Get("client_secret").(string)
 	}
 
+	if d.Get("certificate_id").(string) != "" {
+		cred.Data.ClientId = d.Get("certificate_id").(string)
+	}
+
 	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update vault approle credentials: %s", err)
+		return diag.Errorf("Could not update Azure Service Principal credentials: %s", err)
 	}
 
 	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
@@ -271,7 +274,7 @@ func resourceJenkinsCredentialAzureServicePrincipalImport(ctx context.Context, d
 
 	splitID := strings.Split(d.Id(), "/")
 	if len(splitID) < 2 {
-		return ret, fmt.Errorf("import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
+		return ret, fmt.Errorf("Import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
 	}
 
 	name := splitID[len(splitID)-1]
