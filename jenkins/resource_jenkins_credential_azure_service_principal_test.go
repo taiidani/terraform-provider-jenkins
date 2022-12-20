@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -21,19 +22,46 @@ func TestAccJenkinsCredentialAzureServicePrincipal_basic(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: `
+				Config: `			  
+				resource jenkins_credential_azure_service_principal foo {
+					name = "bla"
+					description = "blabla"
+					subscription_id = "12345"
+					client_id = "123"
+					client_secret = "super-secret"
+					tenant = "456"
+				}`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialAzureServicePrincipalExists("jenkins_credential_azure_service_principal.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "description", "blabla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "subscription_id", "12345"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "client_id", "123"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "client_secret", "super-secret"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "tenant", "456"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsCredentialAzureServicePrincipal_folder(t *testing.T) {
+	var cred AzureServicePrincipalCredentials
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckJenkinsCredentialAzureServicePrincipalDestroy,
+			testAccCheckJenkinsFolderDestroy,
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
 				resource "jenkins_folder" "example" {
-					name        = "azure-service-principal-test-folder"
+					name        = "azure-service-principal-test-folder-%s"
 					description = "A sample folder"
-				
-					security {
-						permissions = [
-							"com.cloudbees.plugins.credentials.CredentialsProvider.Create:anonymous",
-							"com.cloudbees.plugins.credentials.CredentialsProvider.Delete:authenticated",
-							"hudson.model.Item.Cancel:authenticated",
-							"hudson.model.Item.Discover:anonymous",
-						]
-					}
 				}
 				  
 				resource jenkins_credential_azure_service_principal foo {
@@ -44,10 +72,95 @@ func TestAccJenkinsCredentialAzureServicePrincipal_basic(t *testing.T) {
 					client_id = "123"
 					client_secret = "super-secret"
 					tenant = "456"
-				}`,
+				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckJenkinsCredentialAzureServicePrincipalExists("jenkins_credential_azure_service_principal.foo", &cred),
-					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/job/azure-service-principal-test-folder/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/job/azure-service-principal-test-folder-"+randString+"/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "folder", "/job/azure-service-principal-test-folder-"+randString),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "description", "blabla"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+				resource "jenkins_folder" "example" {
+					name        = "azure-service-principal-test-folder-%s"
+					description = "A sample folder"
+				}
+				  
+				resource jenkins_credential_azure_service_principal foo {
+					name = "bla"
+					folder = jenkins_folder.example.id
+					description = "blablablabla"
+					subscription_id = "123"
+					client_id = "123"
+					client_secret = "super-secret"
+					tenant = "456"
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialAzureServicePrincipalExists("jenkins_credential_azure_service_principal.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/job/azure-service-principal-test-folder-"+randString+"/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "folder", "/job/azure-service-principal-test-folder-"+randString),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "description", "blablablabla"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccJenkinsCredentialAzureServicePrincipal_folder_certificate(t *testing.T) {
+	var cred AzureServicePrincipalCredentials
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckJenkinsCredentialAzureServicePrincipalDestroy,
+			testAccCheckJenkinsFolderDestroy,
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+				resource "jenkins_folder" "example" {
+					name        = "azure-service-principal-test-folder-%s"
+					description = "A sample folder"
+				}
+				  
+				resource jenkins_credential_azure_service_principal foo {
+					name = "bla"
+					folder = jenkins_folder.example.id
+					description = "blabla"
+					subscription_id = "123"
+					client_id = "123"
+					certificate_id = "my-cred-id/123"
+					tenant = "456"
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialAzureServicePrincipalExists("jenkins_credential_azure_service_principal.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/job/azure-service-principal-test-folder-"+randString+"/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "certificate_id", "my-cred-id/123"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+				resource "jenkins_folder" "example" {
+					name        = "azure-service-principal-test-folder-%s"
+					description = "A sample folder"
+				}
+				  
+				resource jenkins_credential_azure_service_principal foo {
+					name = "bla"
+					folder = jenkins_folder.example.id
+					description = "blablablabla"
+					subscription_id = "123"
+					client_id = "123"
+					client_secret = "super-secret"
+					tenant = "456"
+				}`, randString),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckJenkinsCredentialAzureServicePrincipalExists("jenkins_credential_azure_service_principal.foo", &cred),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "id", "/job/azure-service-principal-test-folder-"+randString+"/bla"),
+					resource.TestCheckResourceAttr("jenkins_credential_azure_service_principal.foo", "client_secret", "super-secret"),
 				),
 			},
 		},
