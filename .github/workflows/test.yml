@@ -111,28 +111,18 @@ jobs:
           docker-compose up -d --force-recreate jenkins
           while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
 
+      - name: Init example
+        working-directory: example/
+        run: terraform init
+
       - name: Run example
         working-directory: example/
-        env:
-          JENKINS_URL: "http://localhost:8080"
-          JENKINS_USERNAME: "admin"
-          JENKINS_PASSWORD: "admin"
-        run: |
-          terraform init
-          terraform apply -no-color -auto-approve
+        run: terraform apply -no-color -auto-approve
 
       - name: Apply again
         working-directory: example/
-        env:
-          JENKINS_URL: "http://localhost:8080"
-          JENKINS_USERNAME: "admin"
-          JENKINS_PASSWORD: "admin"
         run: terraform apply -no-color -auto-approve
 
       - name: Destroy example
         working-directory: example/
-        env:
-          JENKINS_URL: "http://localhost:8080"
-          JENKINS_USERNAME: "admin"
-          JENKINS_PASSWORD: "admin"
         run: terraform destroy -no-color -auto-approve
