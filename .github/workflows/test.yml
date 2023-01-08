@@ -108,3 +108,19 @@ jobs:
         run: |
           terraform init
           terraform apply -no-color -auto-approve
+
+      - name: Apply again
+        working-directory: example/
+        env:
+          JENKINS_URL: "http://localhost:8080"
+          JENKINS_USERNAME: "admin"
+          JENKINS_PASSWORD: "admin"
+        run: terraform apply -no-color -auto-approve
+
+      - name: Destroy example
+        working-directory: example/
+        env:
+          JENKINS_URL: "http://localhost:8080"
+          JENKINS_USERNAME: "admin"
+          JENKINS_PASSWORD: "admin"
+        run: terraform destroy -no-color -auto-approve
