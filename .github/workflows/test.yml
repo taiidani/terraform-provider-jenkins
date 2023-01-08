@@ -86,7 +86,22 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - run: go mod download
+      - name: Build binary
+        run: go install
+
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Add terraformrc override
+        run: |
+          cat << EOF > ~/.terraformrc
+          provider_installation {
+            dev_overrides {
+              "taiidani/jenkins" = "$(go env GOPATH)/bin"
+            }
+            direct {}
+          }
+          EOF
 
       - name: Set up services
         env:
@@ -95,9 +110,6 @@ jobs:
           docker-compose build
           docker-compose up -d --force-recreate jenkins
           while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
-
-      - name: Set up terraform
-        uses: hashicorp/setup-terraform@v2
 
       - name: Run example
         working-directory: example/
