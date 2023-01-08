@@ -100,7 +100,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Run example
-        working-dir: example/
+        working-directory: example/
         env:
           JENKINS_URL: "http://localhost:8080"
           JENKINS_USERNAME: "admin"
