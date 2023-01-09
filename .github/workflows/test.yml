@@ -74,3 +74,65 @@ jobs:
         with:
           name: acceptance-coverage
           path: coverage.txt
+
+  example:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build binary
+        run: go install
+
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Add terraformrc override
+        run: |
+          cat << EOF > ~/.terraformrc
+          provider_installation {
+            dev_overrides {
+              "taiidani/jenkins" = "$(go env GOPATH)/bin"
+            }
+            direct {}
+          }
+          EOF
+
+      - name: Set up services
+        env:
+          COMPOSE_FILE: ./example/docker-compose.yml
+        run: |
+          docker-compose build
+          docker-compose up -d --force-recreate jenkins
+          while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
+
+      - name: Run example
+        working-directory: example/
+        env:
+          JENKINS_URL: "http://localhost:8080"
+          JENKINS_USERNAME: "admin"
+          JENKINS_PASSWORD: "admin"
+        run: |
+          terraform init
+          terraform apply -no-color -auto-approve
+
+      - name: Apply again
+        working-directory: example/
+        env:
+          JENKINS_URL: "http://localhost:8080"
+          JENKINS_USERNAME: "admin"
+          JENKINS_PASSWORD: "admin"
+        run: terraform apply -no-color -auto-approve
+
+      - name: Destroy example
+        working-directory: example/
+        env:
+          JENKINS_URL: "http://localhost:8080"
+          JENKINS_USERNAME: "admin"
+          JENKINS_PASSWORD: "admin"
+        run: terraform destroy -no-color -auto-approve
