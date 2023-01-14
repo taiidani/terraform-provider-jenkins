@@ -46,13 +46,14 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"jenkins_credential_secret_file":   resourceJenkinsCredentialSecretFile(),
-			"jenkins_credential_secret_text":   resourceJenkinsCredentialSecretText(),
-			"jenkins_credential_ssh":           resourceJenkinsCredentialSSH(),
-			"jenkins_credential_username":      resourceJenkinsCredentialUsername(),
-			"jenkins_credential_vault_approle": resourceJenkinsCredentialVaultAppRole(),
-			"jenkins_folder":                   resourceJenkinsFolder(),
-			"jenkins_job":                      resourceJenkinsJob(),
+			"jenkins_credential_secret_file":             resourceJenkinsCredentialSecretFile(),
+			"jenkins_credential_secret_text":             resourceJenkinsCredentialSecretText(),
+			"jenkins_credential_ssh":                     resourceJenkinsCredentialSSH(),
+			"jenkins_credential_username":                resourceJenkinsCredentialUsername(),
+			"jenkins_credential_vault_approle":           resourceJenkinsCredentialVaultAppRole(),
+			"jenkins_folder":                             resourceJenkinsFolder(),
+			"jenkins_job":                                resourceJenkinsJob(),
+			"jenkins_credential_azure_service_principal": resourceJenkinsCredentialAzureServicePrincipal(),
 		},
 
 		ConfigureContextFunc: configureProvider,
