@@ -3,7 +3,7 @@ package jenkins
 import (
 	"encoding/xml"
 	"fmt"
-	"strings"
+	"regexp"
 )
 
 type folder struct {
@@ -54,6 +54,8 @@ func handleXml(def string) []byte {
 	// This is a horrible practice...but Go doesn't seem to have any mature
 	// support for the XML 1.1 specification. As long as Jenkins doesn't make
 	// use of any 1.1 additions then this should still parse.
-	def = strings.ReplaceAll(def, `<?xml version='1.1' encoding='UTF-8'?>`, `<?xml version='1.0' encoding='UTF-8'?>`)
+	re := regexp.MustCompile(`<\?xml version=(['"])([0-9]+\.[0-9]+)(['"])`)
+	def = re.ReplaceAllString(def, "<?xml version=${1}1.0${3}")
+
 	return []byte(def)
 }
