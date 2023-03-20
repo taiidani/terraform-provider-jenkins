@@ -19,7 +19,7 @@ The following arguments are supported:
 * `domain` - (Optional) The domain store to place the credentials into. If not set will default to the global credentials store.
 * `folder` - (Optional) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
 * `scope` - (Optional) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
-* `description` - (Optional) A human readable description of the credentials being stored. If not set will default to "Managed by Terraform"
+* `description` - (Optional) A human readable description of the credentials being stored. If not set will default to "Managed by Terraform".
 * `secret` - (Required) The secret text to be associated with the credentials.
 
 ## Attribute Reference
