@@ -25,3 +25,11 @@ The following arguments are supported:
 ## Attribute Reference
 
 All arguments above are exported.
+
+## Import
+
+Secret text credential may be imported by their canonical name, e.g.
+
+```sh
+$ terraform import jenkins_credential_secret_text.example "[<folder>/]<domain>/<name>"
+```
