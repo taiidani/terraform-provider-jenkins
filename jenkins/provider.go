@@ -26,13 +26,13 @@ func Provider() *schema.Provider {
 			},
 			"username": {
 				Type:        schema.TypeString,
-				Optional:    true, // Needs to be optional to be able to run terraform validate in CICD pipelines.
+				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_USERNAME", nil),
 				Description: "Username to authenticate to Jenkins.",
 			},
 			"password": {
 				Type:        schema.TypeString,
-				Optional:    true, // Needs to be optional to be able to run terraform validate in CICD pipelines.
+				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_PASSWORD", nil),
 				Description: "Password to authenticate to Jenkins.",
 			},
