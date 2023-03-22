@@ -60,8 +60,8 @@ In addition to [generic `provider` arguments](https://www.terraform.io/docs/conf
 
 * `server_url` - (Required) This is the Jenkins server URL. It should be fully qualified (e.g. `https://...`) and point to the root of the Jenkins server location.
 
-* `username` - (Required) This is Jenkins username for authentication.
+* `username` - (Optional) This is Jenkins username for authentication.
 
-* `password` - (Required) This is the Jenkins password for authentication. If you are using the GitHub OAuth authentication method, enter your Personal Access Token here.
+* `password` - (Optional) This is the Jenkins password for authentication. If you are using the GitHub OAuth authentication method, enter your Personal Access Token here.
 
 * `ca_cert` - (Optional) This is the path to the self-signed certificate that may be required in order to authenticate to your Jenkins instance.
