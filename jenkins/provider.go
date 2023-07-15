@@ -9,12 +9,14 @@ import (
 )
 
 // Provider creates a new Jenkins provider.
+//
+// Deprecated: Use the provider-framework version of the provider for all new resources.
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"server_url": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("JENKINS_URL", nil),
 				Description: "The URL of the Jenkins server to connect to.",
 			},
@@ -60,6 +62,7 @@ func Provider() *schema.Provider {
 	}
 }
 
+// Deprecated: Use the provider-framework version of the provider for all new resources.
 func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	config := Config{
 		ServerURL: d.Get("server_url").(string),
