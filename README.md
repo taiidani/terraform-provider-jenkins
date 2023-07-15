@@ -23,7 +23,7 @@ The scope of the provider covers the entire (extendable) Jenkins API provided th
 
 Working on this provider requires the following:
 
-* [Terraform](https://www.terraform.io/downloads.html) 0.14+
+* [Terraform](https://www.terraform.io/downloads.html) 1.0+
 * [Go](http://www.golang.org) (version requirements documented in the `go.mod` file)
 * [Docker Engine](https://docs.docker.com/engine/install/) 20.10+ (for running acceptance tests)
 
