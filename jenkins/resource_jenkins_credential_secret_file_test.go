@@ -6,9 +6,9 @@ import (
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
@@ -23,7 +23,7 @@ func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
 				Config: `
 				resource jenkins_credential_secret_file foo {
 				  name = "test-secret-file"
-				  filename = "secret.txt"             
+				  filename = "secret.txt"
 				  secretbytes = base64encode("This is a test.")
 				}`,
 				Check: resource.ComposeTestCheckFunc(
@@ -36,7 +36,7 @@ func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
 				Config: `
 				resource jenkins_credential_secret_file foo {
 				  name = "test-secret-file"
-				  filename = "secret.txt"             
+				  filename = "secret.txt"
 				  secretbytes = base64encode("This is a new secret content.")
 				}`,
 				// In comparison below I use already base64 encoded value of: VGhpcyBpcyBhIG5ldyBzZWNyZXQgY29udGVudC4=
@@ -77,7 +77,7 @@ func TestAccJenkinsCredentialSecretFile_folder(t *testing.T) {
 				resource jenkins_credential_secret_file foo {
 					name = "test-secret-file"
 					folder = jenkins_folder.foo_sub.id
-					filename = "secret.txt"             
+					filename = "secret.txt"
 					secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
 				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
@@ -111,7 +111,7 @@ func TestAccJenkinsCredentialSecretFile_folder(t *testing.T) {
 					name = "test-secret-file"
 					folder = jenkins_folder.foo_sub.id
 					description = "new-description"
-                                        filename = "secret.txt"             
+                                        filename = "secret.txt"
                                         secretbytes = "VGhpcyBpcyBhIHRlc3Qu"
 
 				}`, randString),
