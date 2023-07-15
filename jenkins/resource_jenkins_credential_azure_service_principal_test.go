@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 func TestAccJenkinsCredentialAzureServicePrincipal_basic(t *testing.T) {
@@ -22,7 +22,7 @@ func TestAccJenkinsCredentialAzureServicePrincipal_basic(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: `			  
+				Config: `
 				resource jenkins_credential_azure_service_principal foo {
 					name = "bla"
 					description = "blabla"
@@ -63,7 +63,7 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder(t *testing.T) {
 					name        = "azure-service-principal-test-folder-%s"
 					description = "A sample folder"
 				}
-				  
+
 				resource jenkins_credential_azure_service_principal foo {
 					name = "bla"
 					folder = jenkins_folder.example.id
@@ -86,7 +86,7 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder(t *testing.T) {
 					name        = "azure-service-principal-test-folder-%s"
 					description = "A sample folder"
 				}
-				  
+
 				resource jenkins_credential_azure_service_principal foo {
 					name = "bla"
 					folder = jenkins_folder.example.id
@@ -125,7 +125,7 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder_certificate(t *testing
 					name        = "azure-service-principal-test-folder-%s"
 					description = "A sample folder"
 				}
-				  
+
 				resource jenkins_credential_azure_service_principal foo {
 					name = "bla"
 					folder = jenkins_folder.example.id
@@ -147,7 +147,7 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder_certificate(t *testing
 					name        = "azure-service-principal-test-folder-%s"
 					description = "A sample folder"
 				}
-				  
+
 				resource jenkins_credential_azure_service_principal foo {
 					name = "bla"
 					folder = jenkins_folder.example.id
