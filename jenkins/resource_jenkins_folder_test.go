@@ -14,9 +14,9 @@ func TestAccJenkinsFolder_basic(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -38,9 +38,9 @@ func TestAccJenkinsFolder_withDisplayName(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -63,9 +63,9 @@ func TestAccJenkinsFolder_nested(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -94,7 +94,6 @@ func TestAccJenkinsFolder_nested(t *testing.T) {
 }
 
 func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -102,7 +101,7 @@ func testAccCheckJenkinsFolderDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetJob(ctx, rs.Primary.ID)
+		_, err := testAccClient.GetJob(ctx, rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("Folder %s still exists", rs.Primary.ID)
 		}

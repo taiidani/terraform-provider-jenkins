@@ -12,8 +12,8 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -44,8 +44,8 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_nested(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -83,8 +83,8 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic_namespaced(t *testing.
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -117,8 +117,8 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_nested_namespaced(t *testing
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`

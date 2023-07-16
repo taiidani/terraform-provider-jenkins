@@ -116,6 +116,7 @@ func (p *JenkinsProvider) Configure(ctx context.Context, req provider.ConfigureR
 		)
 	}
 	resp.ResourceData = client
+	resp.DataSourceData = client
 }
 
 // DataSources satisfies the provider.Provider interface for JenkinsProvider.

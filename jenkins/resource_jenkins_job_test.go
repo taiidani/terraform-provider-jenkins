@@ -35,9 +35,9 @@ func TestAccJenkinsJob_basic(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsJobDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsJobDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -61,9 +61,9 @@ func TestAccJenkinsJob_basic_parameterized(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsJobDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsJobDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -93,9 +93,9 @@ func TestAccJenkinsJob_nested(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -128,9 +128,9 @@ func TestAccJenkinsJob_nested_parameterized(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsFolderDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsFolderDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -164,7 +164,6 @@ parameters = {
 }
 
 func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -172,7 +171,7 @@ func testAccCheckJenkinsJobDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := client.GetJob(ctx, rs.Primary.ID)
+		_, err := testAccClient.GetJob(ctx, rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("Job %s still exists", rs.Primary.ID)
 		}

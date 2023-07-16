@@ -14,8 +14,8 @@ func TestAccJenkinsCredentialAzureServicePrincipal_basic(t *testing.T) {
 	var cred AzureServicePrincipalCredentials
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialAzureServicePrincipalDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -50,8 +50,8 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialAzureServicePrincipalDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -112,8 +112,8 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder_certificate(t *testing
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialAzureServicePrincipalDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -169,7 +169,6 @@ func TestAccJenkinsCredentialAzureServicePrincipal_folder_certificate(t *testing
 
 func testAccCheckJenkinsCredentialAzureServicePrincipalExists(resourceName string, cred *AzureServicePrincipalCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(jenkinsClient)
 		ctx := context.Background()
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -181,7 +180,7 @@ func testAccCheckJenkinsCredentialAzureServicePrincipalExists(resourceName strin
 			return fmt.Errorf("ID is not set")
 		}
 
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
 		err := manager.GetSingle(ctx, rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
@@ -193,7 +192,6 @@ func testAccCheckJenkinsCredentialAzureServicePrincipalExists(resourceName strin
 }
 
 func testAccCheckJenkinsCredentialAzureServicePrincipalDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -204,7 +202,7 @@ func testAccCheckJenkinsCredentialAzureServicePrincipalDestroy(s *terraform.Stat
 		}
 
 		cred := AzureServicePrincipalCredentials{}
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {
