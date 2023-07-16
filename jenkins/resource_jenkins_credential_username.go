@@ -66,24 +66,27 @@ func (r *credentialUsernameResource) Configure(ctx context.Context, req resource
 // Schema should return the schema for this resource.
 func (r *credentialUsernameResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages Username credentials",
+		MarkdownDescription: `
+Manages a username credential within Jenkins. This username may then be referenced within jobs that are created.
+
+~> The "password" property may leave plain-text passwords in your state file. If using the property to manage the password in Terraform, ensure that your state file is properly secured and encrypted at rest.`,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Service generated identifier.",
+				MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The identifier assigned to the credentials.",
+				MarkdownDescription: "The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"domain": schema.StringAttribute{
-				MarkdownDescription: "The domain namespace that the credentials will be added to.",
+				MarkdownDescription: "The domain store to place the credentials into. If not set will default to the global credentials store.",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("_"),
@@ -93,14 +96,14 @@ func (r *credentialUsernameResource) Schema(_ context.Context, _ resource.Schema
 				},
 			},
 			"folder": schema.StringAttribute{
-				MarkdownDescription: "The folder namespace that the credentials will be added to.",
+				MarkdownDescription: "The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.",
 				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"scope": schema.StringAttribute{
-				MarkdownDescription: "The Jenkins scope assigned to the credentials.",
+				MarkdownDescription: `The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".`,
 				Computed:            true,
 				Default:             stringdefault.StaticString("GLOBAL"),
 				Validators: []validator.String{
@@ -108,17 +111,17 @@ func (r *credentialUsernameResource) Schema(_ context.Context, _ resource.Schema
 				},
 			},
 			"description": schema.StringAttribute{
-				MarkdownDescription: "The credentials descriptive text.",
+				MarkdownDescription: "A human readable description of the credentials being stored.",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString("Managed by Terraform"),
 			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "The credentials user username.",
+				MarkdownDescription: "The username to be associated with the credentials.",
 				Required:            true,
 			},
 			"password": schema.StringAttribute{
-				MarkdownDescription: "The credentials user password. If left empty will be unmanaged.",
+				MarkdownDescription: "The password to be associated with the credentials. If empty then the password property will become unmanaged and expected to be set manually within Jenkins. If set then the password will be updated only upon changes -- if the password is set manually within Jenkins then it will not reconcile this drift until the next time the password property is changed.",
 				Optional:            true,
 				Sensitive:           true,
 			},

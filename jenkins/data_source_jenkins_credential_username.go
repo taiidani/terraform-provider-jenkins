@@ -57,33 +57,34 @@ func (d *credentialUsernameDataSource) Configure(ctx context.Context, req dataso
 
 func (d *credentialUsernameDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get the attributes of a username credential within Jenkins.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Service generated identifier.",
+				MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
 			},
 			"name": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The identifier assigned to the credentials.",
+				MarkdownDescription: "The name of the resource being read.",
 			},
 			"domain": schema.StringAttribute{
-				MarkdownDescription: "The domain namespace that the credentials will be added to.",
+				MarkdownDescription: "The domain store containing this resource.",
 				Optional:            true,
 			},
 			"folder": schema.StringAttribute{
-				MarkdownDescription: "The folder namespace that the credentials will be added to.",
+				MarkdownDescription: "The folder namespace containing this resource.",
 				Optional:            true,
 			},
 			"scope": schema.StringAttribute{
-				MarkdownDescription: "The Jenkins scope assigned to the credentials.",
+				MarkdownDescription: `The visibility of the credentials to Jenkins agents. This will be either "GLOBAL" or "SYSTEM".`,
 				Computed:            true,
 			},
 			"description": schema.StringAttribute{
-				MarkdownDescription: "The credentials descriptive text.",
+				MarkdownDescription: "A human readable description of the credentials being stored.",
 				Computed:            true,
 			},
 			"username": schema.StringAttribute{
-				MarkdownDescription: "The credentials user username.",
+				MarkdownDescription: "The username associated with the credentials.",
 				Computed:            true,
 			},
 		},
