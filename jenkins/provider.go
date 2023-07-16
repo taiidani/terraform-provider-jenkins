@@ -37,7 +37,6 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"jenkins_credential_username":      dataSourceJenkinsCredentialUsername(),
 			"jenkins_credential_vault_approle": dataSourceJenkinsCredentialVaultAppRole(),
 			"jenkins_folder":                   dataSourceJenkinsFolder(),
 			"jenkins_job":                      dataSourceJenkinsJob(),
@@ -47,7 +46,6 @@ func Provider() *schema.Provider {
 			"jenkins_credential_secret_file":             resourceJenkinsCredentialSecretFile(),
 			"jenkins_credential_secret_text":             resourceJenkinsCredentialSecretText(),
 			"jenkins_credential_ssh":                     resourceJenkinsCredentialSSH(),
-			"jenkins_credential_username":                resourceJenkinsCredentialUsername(),
 			"jenkins_credential_vault_approle":           resourceJenkinsCredentialVaultAppRole(),
 			"jenkins_folder":                             resourceJenkinsFolder(),
 			"jenkins_job":                                resourceJenkinsJob(),

@@ -121,10 +121,14 @@ func (p *JenkinsProvider) Configure(ctx context.Context, req provider.ConfigureR
 
 // DataSources satisfies the provider.Provider interface for JenkinsProvider.
 func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		newCredentialUsernameDataSource,
+	}
 }
 
 // Resources satisfies the provider.Provider interface for JenkinsProvider.
 func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		newCredentialUsernameResource,
+	}
 }
