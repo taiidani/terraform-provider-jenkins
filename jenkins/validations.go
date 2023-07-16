@@ -20,8 +20,11 @@ func validateFolderName(val interface{}, path cty.Path) diag.Diagnostics {
 	return diag.Diagnostics{}
 }
 
+// supportedCredentialScopes are the credential scope strings that Jenkins allows to be defined.
+var supportedCredentialScopes = []string{"SYSTEM", "GLOBAL"}
+
+// Deprecated: Use stringvalidator.OneOf against the `supportedCredentialScopes`.
 func validateCredentialScope(val interface{}, path cty.Path) diag.Diagnostics {
-	var supportedCredentialScopes = []string{"SYSTEM", "GLOBAL"}
 	for _, supported := range supportedCredentialScopes {
 		if val == supported {
 			return diag.Diagnostics{}
