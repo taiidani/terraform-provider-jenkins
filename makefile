@@ -1,5 +1,5 @@
 BINARY=terraform-provider-jenkins
-export COMPOSE_FILE=./example/docker-compose.yml
+export COMPOSE_FILE=./integration/docker-compose.yml
 
 default: build
 
@@ -16,6 +16,10 @@ build:
 	@echo "  }"
 	@echo ""
 	@echo "This should only be used during development. See https://www.terraform.io/docs/commands/cli-config.html#development-overrides-for-provider-developers for details."
+
+# Formats TF files and generates documentation
+generate:
+	cd tools; go generate ./...
 
 # Executes all unit tests for the provider
 test:

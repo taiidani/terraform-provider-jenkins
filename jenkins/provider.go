@@ -17,22 +17,22 @@ func Provider() *schema.Provider {
 			"server_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The URL of the Jenkins server to connect to.",
+				Description: "The URL of the Jenkins server to connect to. It should be fully qualified (e.g. `https://...`) and point to the root of the Jenkins server location.",
 			},
 			"ca_cert": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "The path to the Jenkins self-signed certificate.",
+				Description: "The path to the Jenkins self-signed certificate. It may be required in order to authenticate to your Jenkins instance.",
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
-				Description: "Username to authenticate to Jenkins.",
+				Description: "The username to authenticate to Jenkins.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
-				Description: "Password to authenticate to Jenkins.",
+				Description: "The password to authenticate to Jenkins. If you are using the GitHub OAuth authentication method, enter your Personal Access Token here.",
 			},
 		},
 

@@ -1,0 +1,19 @@
+---
+page_title: "Provider: Jenkins"
+description: |-
+  The Jenkins provider is used to interact with the Jenkins API.
+---
+
+# Jenkins Provider
+
+The Jenkins provider is used to interact with the Jenkins API. The provider needs to be configured with the proper credentials before it can be used.
+
+## Example Usage
+
+{{ tffile "examples/provider/provider.tf" }}
+
+## Authentication
+
+Jenkins uses a user/password challenge for authentication. It requires a username & password for determining identity and permissions. This method also supports Jenkins' various authentication plugins, such as GitHub OAuth (through the use of Personal Access Tokens).
+
+{{ .SchemaMarkdown | trimspace }}
