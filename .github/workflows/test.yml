@@ -56,7 +56,7 @@ jobs:
 
       - name: Set up services
         env:
-          COMPOSE_FILE: ./example/docker-compose.yml
+          COMPOSE_FILE: ./integration/docker-compose.yml
         run: |
           docker-compose build
           docker-compose up -d --force-recreate jenkins
@@ -75,7 +75,7 @@ jobs:
           name: acceptance-coverage
           path: coverage.txt
 
-  example:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -105,24 +105,46 @@ jobs:
 
       - name: Set up services
         env:
-          COMPOSE_FILE: ./example/docker-compose.yml
+          COMPOSE_FILE: ./integration/docker-compose.yml
         run: |
           docker-compose build
           docker-compose up -d --force-recreate jenkins
           while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
 
-      - name: Init example
-        working-directory: example/
+      - name: Init integration
+        working-directory: integration/
         run: terraform init
 
-      - name: Run example
-        working-directory: example/
+      - name: Run integration
+        working-directory: integration/
         run: terraform apply -no-color -auto-approve
 
       - name: Apply again
-        working-directory: example/
+        working-directory: integration/
         run: terraform apply -no-color -auto-approve
 
-      - name: Destroy example
-        working-directory: example/
+      - name: Destroy integration
+        working-directory: integration/
         run: terraform destroy -no-color -auto-approve
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Generate Docs
+        run: make generate
+
+      - name: Verify directory is clean
+        run: test -z "$(git status --porcelain)"
+
+      - name: Error message
+        if: failure()
+        run: |
+          echo ':warning: Generated docs differs from committed docs. Did you forget to run `make generate`?' >> $GITHUB_STEP_SUMMARY
