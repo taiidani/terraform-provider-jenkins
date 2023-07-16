@@ -14,9 +14,9 @@ func TestAccJenkinsCredentialVaultAppRole_basic(t *testing.T) {
 	var cred VaultAppRoleCredentials
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsCredentialVaultAppRoleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsCredentialVaultAppRoleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -52,9 +52,9 @@ func TestAccJenkinsCredentialVaultAppRole_basic_namespaced(t *testing.T) {
 	var cred VaultAppRoleCredentials
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsCredentialVaultAppRoleDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsCredentialVaultAppRoleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -93,8 +93,8 @@ func TestAccJenkinsCredentialVaultAppRole_folder_namespaced(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialVaultAppRoleDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -177,8 +177,8 @@ func TestAccJenkinsCredentialVaultAppRole_folder(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialVaultAppRoleDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -256,7 +256,6 @@ func TestAccJenkinsCredentialVaultAppRole_folder(t *testing.T) {
 
 func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *VaultAppRoleCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(jenkinsClient)
 		ctx := context.Background()
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -268,7 +267,7 @@ func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *
 			return fmt.Errorf("ID is not set")
 		}
 
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
 		err := manager.GetSingle(ctx, rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
@@ -280,7 +279,6 @@ func testAccCheckJenkinsCredentialVaultAppRoleExists(resourceName string, cred *
 }
 
 func testAccCheckJenkinsCredentialVaultAppRoleDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -291,7 +289,7 @@ func testAccCheckJenkinsCredentialVaultAppRoleDestroy(s *terraform.State) error 
 		}
 
 		cred := VaultAppRoleCredentials{}
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {

@@ -15,9 +15,9 @@ func TestAccJenkinsCredentialSSH_basic(t *testing.T) {
 	var cred jenkins.SSHCredentials
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsCredentialSSHDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsCredentialSSHDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -67,8 +67,8 @@ func TestAccJenkinsCredentialSSH_folder(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialSSHDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -172,7 +172,6 @@ func TestAccJenkinsCredentialSSH_folder(t *testing.T) {
 
 func testAccCheckJenkinsCredentialSSHExists(resourceName string, cred *jenkins.SSHCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(jenkinsClient)
 		ctx := context.Background()
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -184,7 +183,7 @@ func testAccCheckJenkinsCredentialSSHExists(resourceName string, cred *jenkins.S
 			return fmt.Errorf("ID is not set")
 		}
 
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
 		err := manager.GetSingle(ctx, rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
@@ -196,7 +195,6 @@ func testAccCheckJenkinsCredentialSSHExists(resourceName string, cred *jenkins.S
 }
 
 func testAccCheckJenkinsCredentialSSHDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -207,7 +205,7 @@ func testAccCheckJenkinsCredentialSSHDestroy(s *terraform.State) error {
 		}
 
 		cred := jenkins.SSHCredentials{}
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {

@@ -15,9 +15,9 @@ func TestAccJenkinsCredentialSecretFile_basic(t *testing.T) {
 	var cred jenkins.FileCredentials
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckJenkinsCredentialSecretFileDestroy,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsCredentialSecretFileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -54,8 +54,8 @@ func TestAccJenkinsCredentialSecretFile_folder(t *testing.T) {
 	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			testAccCheckJenkinsCredentialSecretFileDestroy,
 			testAccCheckJenkinsFolderDestroy,
@@ -126,7 +126,6 @@ func TestAccJenkinsCredentialSecretFile_folder(t *testing.T) {
 
 func testAccCheckJenkinsCredentialSecretFileExists(resourceName string, cred *jenkins.FileCredentials) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		client := testAccProvider.Meta().(jenkinsClient)
 		ctx := context.Background()
 
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -138,7 +137,7 @@ func testAccCheckJenkinsCredentialSecretFileExists(resourceName string, cred *je
 			return fmt.Errorf("ID is not set")
 		}
 
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Attributes["folder"])
 		err := manager.GetSingle(ctx, rs.Primary.Attributes["domain"], rs.Primary.Attributes["name"], cred)
 		if err != nil {
@@ -150,7 +149,6 @@ func testAccCheckJenkinsCredentialSecretFileExists(resourceName string, cred *je
 }
 
 func testAccCheckJenkinsCredentialSecretFileDestroy(s *terraform.State) error {
-	client := testAccProvider.Meta().(jenkinsClient)
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -161,7 +159,7 @@ func testAccCheckJenkinsCredentialSecretFileDestroy(s *terraform.State) error {
 		}
 
 		cred := jenkins.FileCredentials{}
-		manager := client.Credentials()
+		manager := testAccClient.Credentials()
 		manager.Folder = formatFolderName(rs.Primary.Meta["folder"].(string))
 		err := manager.GetSingle(ctx, rs.Primary.Meta["domain"].(string), rs.Primary.Meta["name"].(string), &cred)
 		if err == nil {
