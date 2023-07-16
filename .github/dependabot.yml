@@ -15,3 +15,11 @@ updates:
     groups:
       combined:
         patterns: ["*"]
+
+  - package-ecosystem: "gomod"
+    directory: "/tools"
+    schedule:
+      interval: "weekly"
+    groups:
+      tools:
+        patterns: ["*"]

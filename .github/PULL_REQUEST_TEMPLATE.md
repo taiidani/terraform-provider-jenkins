@@ -8,8 +8,8 @@
 
 # Test Steps
 
-- [ ] Have you updated the `docs/` folder to match your change?
-- [ ] Have you exercised your change using the `examples/` docker compose setup?
+- [ ] If you've changed documentation, have you run `make generate` to render the `docs/` folder?
+- [ ] Have you exercised your change using the `integration/` docker compose setup?
 
 ```sh
 make testacc

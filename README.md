@@ -43,6 +43,12 @@ In order to run the full suite of Acceptance tests, run `make testacc`. These te
 $ make testacc
 ```
 
+When changing a data source or resource, you may need to update the documentation. This documentation is automatically rendered by https://github.com/hashicorp/terraform-plugin-docs. To trigger a render, execute:
+
+```sh
+$ make generate
+```
+
 ## Attribution
 
 This provider design was originally inspired from the work at [dihedron/terraform-provider-jenkins](https://github.com/dihedron/terraform-provider-jenkins).
