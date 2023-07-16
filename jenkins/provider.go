@@ -17,25 +17,21 @@ func Provider() *schema.Provider {
 			"server_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("JENKINS_URL", nil),
 				Description: "The URL of the Jenkins server to connect to.",
 			},
 			"ca_cert": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("JENKINS_CA_CERT", nil),
 				Description: "The path to the Jenkins self-signed certificate.",
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
-				DefaultFunc: schema.EnvDefaultFunc("JENKINS_USERNAME", nil),
 				Description: "Username to authenticate to Jenkins.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true, // Needs to be optional to be able to run terraform validate without providing credentials
-				DefaultFunc: schema.EnvDefaultFunc("JENKINS_PASSWORD", nil),
 				Description: "Password to authenticate to Jenkins.",
 			},
 		},
@@ -64,18 +60,41 @@ func Provider() *schema.Provider {
 
 // Deprecated: Use the provider-framework version of the provider for all new resources.
 func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	serverURL := os.Getenv("JENKINS_URL")
+	if d.Get("server_url").(string) != "" {
+		serverURL = d.Get("server_url").(string)
+	}
+	if serverURL == "" {
+		return nil, diag.Errorf("server_url is required and must be provided in the provider config or the JENKINS_URL environment variable")
+	}
+
+	caCert := os.Getenv("JENKINS_CA_CERT")
+	if d.Get("ca_cert").(string) != "" {
+		caCert = d.Get("ca_cert").(string)
+	}
+
+	username := os.Getenv("JENKINS_USERNAME")
+	if d.Get("username").(string) != "" {
+		username = d.Get("username").(string)
+	}
+
+	password := os.Getenv("JENKINS_PASSWORD")
+	if d.Get("password").(string) != "" {
+		password = d.Get("password").(string)
+	}
+
 	config := Config{
-		ServerURL: d.Get("server_url").(string),
-		Username:  d.Get("username").(string),
-		Password:  d.Get("password").(string),
+		ServerURL: serverURL,
+		Username:  username,
+		Password:  password,
 	}
 
 	// Read the certificate
 	var err error
-	if d.Get("ca_cert").(string) != "" {
-		config.CACert, err = os.Open(d.Get("ca_cert").(string))
+	if caCert != "" {
+		config.CACert, err = os.Open(caCert)
 		if err != nil {
-			return nil, diag.Errorf("Unable to open certificate file %s: %s", d.Get("ca_cert").(string), err.Error())
+			return nil, diag.Errorf("Unable to open certificate file %s: %s", caCert, err.Error())
 		}
 	}
 
