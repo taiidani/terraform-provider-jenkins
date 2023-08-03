@@ -40,6 +40,7 @@ func Provider() *schema.Provider {
 			"jenkins_credential_vault_approle": dataSourceJenkinsCredentialVaultAppRole(),
 			"jenkins_folder":                   dataSourceJenkinsFolder(),
 			"jenkins_job":                      dataSourceJenkinsJob(),
+			"jenkins_view":                     dataSourceJenkinsView(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{

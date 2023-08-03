@@ -14,6 +14,7 @@ type jenkinsClient interface {
 	DeleteJobInFolder(ctx context.Context, name string, parentIDs ...string) (bool, error)
 	GetJob(ctx context.Context, id string, parentIDs ...string) (*jenkins.Job, error)
 	GetFolder(ctx context.Context, id string, parents ...string) (*jenkins.Folder, error)
+	GetView(ctx context.Context, name string) (*jenkins.View, error)
 }
 
 // jenkinsAdapter wraps the Jenkins client, enabling additional functionality
