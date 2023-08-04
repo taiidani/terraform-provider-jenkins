@@ -65,13 +65,22 @@ func resourceJenkinsViewRead(ctx context.Context, d *schema.ResourceData, meta i
 	}
 
 	description := view.GetDescription()
-	d.Set("description", description)
+	err = d.Set("description", description)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::read - Description could not be set for View %q, %w", name, err))
+	}
 
 	url := view.GetUrl()
-	d.Set("url", url)
+	err = d.Set("url", url)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::read - Url could not be set for View %q, %w", name, err))
+	}
 
 	name = view.GetName()
-	d.Set("name", name)
+	err = d.Set("name", name)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("jenkins::read - Name could not be set for View %q, %w", name, err))
+	}
 
 	return nil
 }
