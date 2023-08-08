@@ -51,6 +51,7 @@ func Provider() *schema.Provider {
 			"jenkins_folder":                             resourceJenkinsFolder(),
 			"jenkins_job":                                resourceJenkinsJob(),
 			"jenkins_credential_azure_service_principal": resourceJenkinsCredentialAzureServicePrincipal(),
+			"jenkins_view":                               resourceJenkinsView(),
 		},
 
 		ConfigureContextFunc: configureProvider,
