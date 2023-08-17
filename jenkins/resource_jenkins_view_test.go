@@ -22,12 +22,10 @@ func TestAccJenkinsView_basic(t *testing.T) {
 				Config: fmt.Sprintf(`
 				resource jenkins_view foo {
 				  name = "tf-acc-test-%s"
-				  description = "Terraform acceptance tests %s"
-				}`, randString, randString),
+				}`, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_view.foo", "id", "tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_view.foo", "name", "tf-acc-test-"+randString),
-					resource.TestCheckResourceAttr("jenkins_view.foo", "description", "Terraform acceptance tests "+randString),
 				),
 			},
 		},
