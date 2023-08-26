@@ -13,6 +13,7 @@ type mockJenkinsClient struct {
 	mockDeleteJobInFolder func(ctx context.Context, name string, parentIDs ...string) (bool, error)
 	mockGetJob            func(ctx context.Context, id string, parentIDs ...string) (*jenkins.Job, error)
 	mockGetFolder         func(ctx context.Context, id string, parentIDs ...string) (*jenkins.Folder, error)
+	mockGetView           func(ctx context.Context, name string) (*jenkins.View, error)
 }
 
 func (m *mockJenkinsClient) CreateJobInFolder(ctx context.Context, config string, jobName string, parentIDs ...string) (*jenkins.Job, error) {
@@ -33,6 +34,10 @@ func (m *mockJenkinsClient) GetJob(ctx context.Context, id string, parentIDs ...
 
 func (m *mockJenkinsClient) GetFolder(ctx context.Context, id string, parentIDs ...string) (*jenkins.Folder, error) {
 	return m.mockGetFolder(ctx, id, parentIDs...)
+}
+
+func (m *mockJenkinsClient) GetView(ctx context.Context, name string) (*jenkins.View, error) {
+	return m.mockGetView(ctx, name)
 }
 
 func TestNewJenkinsClient(t *testing.T) {
