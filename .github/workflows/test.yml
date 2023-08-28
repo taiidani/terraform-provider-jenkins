@@ -15,7 +15,7 @@ jobs:
           cache: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3.6.0
+        uses: golangci/golangci-lint-action@v3.7.0
         with:
           skip-pkg-cache: true
           skip-build-cache: true
