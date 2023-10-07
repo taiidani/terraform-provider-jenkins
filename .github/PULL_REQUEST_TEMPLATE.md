@@ -9,10 +9,6 @@
 # Test Steps
 
 - [ ] If you've changed documentation, have you run `make generate` to render the `docs/` folder?
-- [ ] Have you exercised your change using the `integration/` docker compose setup?
+- [ ] Have you updated the `integration/` tests with a [terraform test](https://developer.hashicorp.com/terraform/language/tests) compatible change?
 
-```sh
-make testacc
-```
-
-<!-- Additional test steps beyond the acceptance tests go here. -->
+<!-- Additional test steps go here. -->

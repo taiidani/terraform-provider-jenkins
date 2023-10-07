@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       combined:
         patterns: ["*"]
@@ -22,4 +22,12 @@ updates:
       interval: "weekly"
     groups:
       tools:
+        patterns: ["*"]
+
+  - package-ecosystem: "terraform"
+    directory: "/integration"
+    schedule:
+      interval: "monthly"
+    groups:
+      integration:
         patterns: ["*"]

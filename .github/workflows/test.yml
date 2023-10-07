@@ -103,29 +103,13 @@ jobs:
           }
           EOF
 
-      - name: Set up services
-        env:
-          COMPOSE_FILE: ./integration/docker-compose.yml
-        run: |
-          docker-compose build
-          docker-compose up -d --force-recreate jenkins
-          while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
-
       - name: Init integration
         working-directory: integration/
         run: terraform init
 
       - name: Run integration
         working-directory: integration/
-        run: terraform apply -no-color -auto-approve
-
-      - name: Apply again
-        working-directory: integration/
-        run: terraform apply -no-color -auto-approve
-
-      - name: Destroy integration
-        working-directory: integration/
-        run: terraform destroy -no-color -auto-approve
+        run: terraform test
 
   docs:
     runs-on: ubuntu-latest
