@@ -18,16 +18,10 @@ resource "jenkins_job" "pipeline_scm" {
   template = local.pipeline_scm_template
 }
 
-check "pipeline_scm_xml" {
-  data "jenkins_job" "pipeline_scm" {
-    name   = "pipeline-scm"
-    folder = jenkins_folder.example.id
-  }
-
-  assert {
-    condition     = trimspace(data.jenkins_job.pipeline_scm.template) == trimspace(local.pipeline_scm_template)
-    error_message = "${data.jenkins_job.pipeline_scm.name} produced inconsistent XML"
-  }
+data "jenkins_job" "pipeline_scm" {
+  depends_on = [jenkins_job.pipeline_scm]
+  name       = "pipeline-scm"
+  folder     = jenkins_job.pipeline_scm.folder
 }
 
 resource "jenkins_job" "pipeline_inline" {
@@ -36,16 +30,10 @@ resource "jenkins_job" "pipeline_inline" {
   template = local.pipeline_inline_template
 }
 
-check "pipeline_inline_xml" {
-  data "jenkins_job" "pipeline_inline" {
-    name   = "pipeline-inline"
-    folder = jenkins_folder.example.id
-  }
-
-  assert {
-    condition     = trimspace(data.jenkins_job.pipeline_inline.template) == trimspace(local.pipeline_inline_template)
-    error_message = "${data.jenkins_job.pipeline_inline.name} produced inconsistent XML"
-  }
+data "jenkins_job" "pipeline_inline" {
+  depends_on = [jenkins_job.pipeline_inline]
+  name       = "pipeline-inline"
+  folder     = jenkins_job.pipeline_inline.folder
 }
 
 resource "jenkins_job" "freestyle" {
@@ -54,14 +42,8 @@ resource "jenkins_job" "freestyle" {
   template = local.freestyle_template
 }
 
-check "freestyle_xml" {
-  data "jenkins_job" "freestyle" {
-    name   = "freestyle"
-    folder = jenkins_folder.example.id
-  }
-
-  assert {
-    condition     = trimspace(data.jenkins_job.freestyle.template) == trimspace(local.freestyle_template)
-    error_message = "${data.jenkins_job.freestyle.name} produced inconsistent XML"
-  }
+data "jenkins_job" "freestyle" {
+  depends_on = [jenkins_job.freestyle]
+  name       = "freestyle"
+  folder     = jenkins_job.freestyle.folder
 }
