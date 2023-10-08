@@ -1,7 +1,6 @@
-# Terraform Provider
+# Jenkins Terraform Provider
 
-![Unit Tests](https://github.com/taiidani/terraform-provider-jenkins/workflows/Unit%20Tests/badge.svg)
-![Acceptance Tests](https://github.com/taiidani/terraform-provider-jenkins/workflows/Acceptance%20Tests/badge.svg)
+[![test](https://github.com/taiidani/terraform-provider-jenkins/actions/workflows/test.yml/badge.svg)](https://github.com/taiidani/terraform-provider-jenkins/actions/workflows/test.yml)
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
