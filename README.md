@@ -23,7 +23,7 @@ The scope of the provider covers the entire (extendable) Jenkins API provided th
 
 Working on this provider requires the following:
 
-* [Terraform](https://www.terraform.io/downloads.html) 1.0+
+* [Terraform](https://www.terraform.io/downloads.html) 1.6.0+
 * [Go](http://www.golang.org) (version requirements documented in the `go.mod` file)
 * [Docker Engine](https://docs.docker.com/engine/install/) 20.10+ (for running acceptance tests)
 
@@ -41,6 +41,14 @@ In order to run the full suite of Acceptance tests, run `make testacc`. These te
 
 ```sh
 $ make testacc
+```
+
+In order to run the integration tests, navigate to the tests folder and run [terraform test](https://developer.hashicorp.com/terraform/language/tests) within it. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
+
+```sh
+$ cd integration
+$ terraform init
+$ terraform test
 ```
 
 When changing a data source or resource, you may need to update the documentation. This documentation is automatically rendered by https://github.com/hashicorp/terraform-plugin-docs. To trigger a render, execute:
