@@ -41,7 +41,6 @@ run "jobs" {
   }
 }
 
-
 run "credentials" {
   module {
     source = "./credentials"
@@ -53,5 +52,18 @@ run "credentials" {
 
   providers = {
     random = random
+  }
+
+  assert {
+    condition     = output.username.username == jenkins_credential_username.global.username
+    error_message = "${output.username.username} data value did not match resource value"
+  }
+  assert {
+    condition     = output.vault_approle.role_id == jenkins_credential_vault_approle.global.role_id
+    error_message = "${output.vault_approle.role_id} data value did not match resource value"
+  }
+  assert {
+    condition     = output.vault_approle.namespace == jenkins_credential_vault_approle.global.namespace
+    error_message = "${output.vault_approle.namespace} data value did not match resource value"
   }
 }

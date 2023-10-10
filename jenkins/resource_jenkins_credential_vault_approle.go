@@ -6,8 +6,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // VaultAppRoleCredentials struct representing credential for storing Vault AppRole role id and secret id
@@ -22,200 +29,328 @@ type VaultAppRoleCredentials struct {
 	SecretID    string   `xml:"secretId"`
 }
 
-func resourceJenkinsCredentialVaultAppRole() *schema.Resource {
-	return &schema.Resource{
-		CreateContext: resourceJenkinsCredentialVaultAppRoleCreate,
-		ReadContext:   resourceJenkinsCredentialVaultAppRoleRead,
-		UpdateContext: resourceJenkinsCredentialVaultAppRoleUpdate,
-		DeleteContext: resourceJenkinsCredentialVaultAppRoleDelete,
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceJenkinsCredentialVaultAppRoleImport,
-		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The identifier assigned to the credentials.",
-				Required:    true,
-				ForceNew:    true,
+type credentialVaultAppRoleResourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Domain      types.String `tfsdk:"domain"`
+	Folder      types.String `tfsdk:"folder"`
+	Scope       types.String `tfsdk:"scope"`
+	Description types.String `tfsdk:"description"`
+	Namespace   types.String `tfsdk:"namespace"`
+	Path        types.String `tfsdk:"path"`
+	RoleID      types.String `tfsdk:"role_id"`
+	SecretID    types.String `tfsdk:"secret_id"`
+}
+
+type credentialVaultAppRoleResource struct {
+	client *jenkinsAdapter
+}
+
+var _ resource.ResourceWithConfigure = &credentialVaultAppRoleResource{}
+
+func newCredentialVaultAppRoleResource() resource.Resource {
+	return &credentialVaultAppRoleResource{}
+}
+
+// Metadata should return the full name of the resource.
+func (r *credentialVaultAppRoleResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_credential_vault_approle"
+}
+
+// Configure should register the client for the resource.
+func (r *credentialVaultAppRoleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// Prevent panic if the provider has not been configured.
+	if req.ProviderData == nil {
+		return
+	}
+
+	client, ok := req.ProviderData.(*jenkinsAdapter)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *jenkinsAdapter, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+		)
+
+		return
+	}
+
+	r.client = client
+}
+
+// Schema should return the schema for this resource.
+func (r *credentialVaultAppRoleResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: `
+Manages a Vault AppRole credential within Jenkins. This credential may then be referenced within jobs that are created.
+
+~> The "secret_id" property may leave plain-text secret id in your state file. If using the property to manage the secret id in Terraform, ensure that your state file is properly secured and encrypted at rest.
+
+~> The Jenkins installation that uses this resource is expected to have the [Hashicorp Vault Plugin](https://plugins.jenkins.io/hashicorp-vault-plugin/) installed in their system.`,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"domain": {
-				Type:        schema.TypeString,
-				Description: "The domain namespace that the credentials will be added to.",
-				Optional:    true,
-				Default:     "_",
-				// In-place updates should be possible, but gojenkins does not support move operations
-				ForceNew: true,
+			"name": schema.StringAttribute{
+				Required:            true,
+				MarkdownDescription: "The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"folder": {
-				Type:        schema.TypeString,
-				Description: "The folder namespace that the credentials will be added to.",
-				Optional:    true,
-				ForceNew:    true,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The domain store to place the credentials into. If not set will default to the global credentials store.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(defaultValueDomain),
+				PlanModifiers: []planmodifier.String{
+					// In-place updates should be possible, but gojenkins does not support move operations
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"scope": {
-				Type:             schema.TypeString,
-				Description:      "The Jenkins scope assigned to the credentials.",
-				Optional:         true,
-				Default:          "GLOBAL",
-				ValidateDiagFunc: validateCredentialScope,
+			"folder": schema.StringAttribute{
+				MarkdownDescription: "The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.",
+				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "The credentials descriptive text.",
-				Optional:    true,
-				Default:     "Managed by Terraform",
+			"scope": schema.StringAttribute{
+				MarkdownDescription: `The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".`,
+				Computed:            true,
+				Default:             stringdefault.StaticString("GLOBAL"),
+				Validators: []validator.String{
+					stringvalidator.OneOf(supportedCredentialScopes...),
+				},
 			},
-			"namespace": {
-				Type:        schema.TypeString,
-				Description: "Namespace of the roles approle backend.",
-				Optional:    true,
+			"description": schema.StringAttribute{
+				MarkdownDescription: "A human readable description of the credentials being stored.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("Managed by Terraform"),
 			},
-			"path": {
-				Type:        schema.TypeString,
-				Description: "Path of the roles approle backend.",
-				Optional:    true,
-				Default:     "approle",
+			"namespace": schema.StringAttribute{
+				MarkdownDescription: "The Vault namespace of the approle credential.",
+				Optional:            true,
 			},
-			"role_id": {
-				Type:        schema.TypeString,
-				Description: "The roles role_id.",
-				Required:    true,
+			"path": schema.StringAttribute{
+				MarkdownDescription: "The unique name of the approle auth backend. Defaults to `approle`.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("approle"),
 			},
-			"secret_id": {
-				Type:        schema.TypeString,
-				Description: "The roles secret_id. If left empty will be unmanaged.",
-				Optional:    true,
-				Sensitive:   true,
+			"role_id": schema.StringAttribute{
+				MarkdownDescription: "The role_id to be associated with the credentials.",
+				Required:            true,
+			},
+			"secret_id": schema.StringAttribute{
+				MarkdownDescription: "The secret_id to be associated with the credentials. If empty then the secret_id property will become unmanaged and expected to be set manually within Jenkins. If set then the secret_id will be updated only upon changes -- if the secret_id is set manually within Jenkins then it will not reconcile this drift until the next time the secret_id property is changed.",
+				Optional:            true,
+				Sensitive:           true,
 			},
 		},
 	}
 }
 
-func resourceJenkinsCredentialVaultAppRoleCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	cm := client.Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
-	// return diag.FromErr(fmt.Errorf("invalid folder name '%s', '%s'", cm.Folder, d.Get("folder").(string)))
+// Create is called when the provider must create a new resource. Config
+// and planned state values should be read from the
+// CreateRequest and new state values set on the CreateResponse.
+func (r *credentialVaultAppRoleResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data credentialVaultAppRoleResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
 	// Validate that the folder exists
-	if err := folderExists(ctx, client, cm.Folder); err != nil {
-		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
+	if err := folderExists(ctx, r.client, cm.Folder); err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Folder",
+			fmt.Sprintf("An invalid folder name %q was specified. ", cm.Folder)+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
 	cred := VaultAppRoleCredentials{
-		ID:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
-		Namespace:   d.Get("namespace").(string),
-		Path:        d.Get("path").(string),
-		RoleID:      d.Get("role_id").(string),
-		SecretID:    d.Get("secret_id").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
+		Namespace:   data.Namespace.ValueString(),
+		Path:        data.Path.ValueString(),
+		RoleID:      data.RoleID.ValueString(),
+		SecretID:    data.SecretID.ValueString(),
 	}
 
-	domain := d.Get("domain").(string)
-	err := cm.Add(ctx, domain, cred)
+	err := cm.Add(ctx, data.Domain.ValueString(), cred)
 	if err != nil {
-		return diag.Errorf("Could not create vault approle credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Create Resource",
+			"An unexpected error occurred while creating the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialVaultAppRoleRead(ctx, d, meta)
+	// Convert from the API data model to the Terraform data model
+	// and set any unknown attribute values.
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialVaultAppRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Read is called when the provider must read resource values in order
+// to update state. Planned state values should be read from the
+// ReadRequest and new state values set on the ReadResponse.
+func (r *credentialVaultAppRoleResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data credentialVaultAppRoleResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	cred := VaultAppRoleCredentials{}
-	err := cm.GetSingle(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-		&cred,
-	)
-
+	err := cm.GetSingle(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "404") {
 			// Job does not exist
-			d.SetId("")
-			return nil
+			resp.State.RemoveResource(ctx)
+			return
 		}
 
-		return diag.Errorf("Could not read vault approle credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Refresh Resource",
+			"An unexpected error occurred while parsing the resource read response. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	_ = d.Set("scope", cred.Scope)
-	_ = d.Set("description", cred.Description)
-	_ = d.Set("namespace", cred.Namespace)
-	_ = d.Set("path", cred.Path)
-	_ = d.Set("role_id", cred.RoleID)
-	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
-	// Password only applies to Create/Update operations if the "password" property is non-empty
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+	data.Scope = types.StringValue(cred.Scope)
+	data.Description = types.StringValue(cred.Description)
+	data.Namespace = types.StringValue(cred.Namespace)
+	data.Path = types.StringValue(cred.Path)
+	data.RoleID = types.StringValue(cred.RoleID)
+	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
+	// Secret only applies to Create/Update operations if the "secret_id" property is non-empty
 
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialVaultAppRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Update is called to update the state of the resource. Config, planned
+// state, and prior state values should be read from the
+// UpdateRequest and new state values set on the UpdateResponse.
+func (r *credentialVaultAppRoleResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data credentialVaultAppRoleResourceModel
 
-	domain := d.Get("domain").(string)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
 	cred := VaultAppRoleCredentials{
-		ID:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
-		Namespace:   d.Get("namespace").(string),
-		Path:        d.Get("path").(string),
-		RoleID:      d.Get("role_id").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
+		Namespace:   data.Namespace.ValueString(),
+		Path:        data.Path.ValueString(),
+		RoleID:      data.RoleID.ValueString(),
 	}
 
 	// Only enforce the password if it is non-empty
-	if d.Get("secret_id").(string) != "" {
-		cred.SecretID = d.Get("secret_id").(string)
+	if data.SecretID.ValueString() != "" {
+		cred.SecretID = data.SecretID.ValueString()
 	}
 
-	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
+	err := cm.Update(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update vault approle credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Update Resource",
+			"An unexpected error occurred while attempting to update the resource. "+
+				"Please retry the operation or report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialVaultAppRoleRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialVaultAppRoleDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Delete is called when the provider must delete the resource. Config
+// values may be read from the DeleteRequest.
+//
+// If execution completes without error, the framework will automatically
+// call DeleteResponse.State.RemoveResource(), so it can be omitted
+// from provider logic.
+func (r *credentialVaultAppRoleResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data credentialVaultAppRoleResourceModel
 
-	err := cm.Delete(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-	)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	err := cm.Delete(ctx, data.Domain.ValueString(), data.Name.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
-	}
+		resp.Diagnostics.AddError(
+			"Unable to Delete Resource",
+			"An unexpected error occurred while deleting the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
 
-	return nil
+		return
+	}
 }
 
-func resourceJenkinsCredentialVaultAppRoleImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ret := []*schema.ResourceData{d}
-
-	splitID := strings.Split(d.Id(), "/")
+// ImportState is called when performing import operations of existing resources.
+func (r *credentialVaultAppRoleResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitID := strings.Split(req.ID, "/")
 	if len(splitID) < 2 {
-		return ret, fmt.Errorf("import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: \"[<folder>/]<domain>/<name>\". Got: %q", req.ID),
+		)
+		return
 	}
 
 	name := splitID[len(splitID)-1]
-	_ = d.Set("name", name)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), name)...)
 
 	domain := splitID[len(splitID)-2]
-	_ = d.Set("domain", domain)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("domain"), domain)...)
 
 	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	_ = d.Set("folder", folder)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("folder"), folder)...)
 
-	d.SetId(generateCredentialID(folder, name))
-	return ret, nil
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), generateCredentialID(folder, name))...)
 }

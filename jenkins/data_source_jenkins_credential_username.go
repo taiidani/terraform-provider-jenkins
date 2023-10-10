@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 type credentialUsernameDataSourceModel struct {
@@ -102,6 +103,10 @@ func (d *credentialUsernameDataSource) Read(ctx context.Context, req datasource.
 
 	cm := d.client.Credentials()
 	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	if data.Domain.IsNull() {
+		data.Domain = basetypes.NewStringValue(defaultValueDomain)
+	}
 
 	cred := jenkins.UsernameCredentials{}
 	err := cm.GetSingle(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
