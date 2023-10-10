@@ -135,6 +135,8 @@ Manages a Vault AppRole credential within Jenkins. This credential may then be r
 			"namespace": schema.StringAttribute{
 				MarkdownDescription: "The Vault namespace of the approle credential.",
 				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
 			},
 			"path": schema.StringAttribute{
 				MarkdownDescription: "The unique name of the approle auth backend. Defaults to `approle`.",
