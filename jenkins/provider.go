@@ -8,6 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const (
+	defaultValueDomain = "_"
+)
+
 // Provider creates a new Jenkins provider.
 //
 // Deprecated: Use the provider-framework version of the provider for all new resources.
@@ -37,17 +41,15 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"jenkins_credential_vault_approle": dataSourceJenkinsCredentialVaultAppRole(),
-			"jenkins_folder":                   dataSourceJenkinsFolder(),
-			"jenkins_job":                      dataSourceJenkinsJob(),
-			"jenkins_view":                     dataSourceJenkinsView(),
+			"jenkins_folder": dataSourceJenkinsFolder(),
+			"jenkins_job":    dataSourceJenkinsJob(),
+			"jenkins_view":   dataSourceJenkinsView(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
 			"jenkins_credential_secret_file":             resourceJenkinsCredentialSecretFile(),
 			"jenkins_credential_secret_text":             resourceJenkinsCredentialSecretText(),
 			"jenkins_credential_ssh":                     resourceJenkinsCredentialSSH(),
-			"jenkins_credential_vault_approle":           resourceJenkinsCredentialVaultAppRole(),
 			"jenkins_folder":                             resourceJenkinsFolder(),
 			"jenkins_job":                                resourceJenkinsJob(),
 			"jenkins_credential_azure_service_principal": resourceJenkinsCredentialAzureServicePrincipal(),

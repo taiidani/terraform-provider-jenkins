@@ -1,7 +1,17 @@
 resource "jenkins_credential_vault_approle" "global" {
   name      = "global-approle"
+  namespace = "baz"
   role_id   = "foo"
   secret_id = "bar"
+}
+
+data "jenkins_credential_vault_approle" "global" {
+  depends_on = [jenkins_credential_vault_approle.global]
+  name       = "global-approle"
+}
+
+output "vault_approle" {
+  value = data.jenkins_credential_vault_approle.global
 }
 
 resource "jenkins_credential_vault_approle" "folder" {
@@ -10,7 +20,6 @@ resource "jenkins_credential_vault_approle" "folder" {
   role_id   = "foo"
   secret_id = "bar"
 }
-
 
 resource "jenkins_credential_vault_approle" "global-namespaced" {
   name      = "global-approle-namespaced"

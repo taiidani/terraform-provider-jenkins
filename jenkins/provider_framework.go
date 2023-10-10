@@ -123,6 +123,7 @@ func (p *JenkinsProvider) Configure(ctx context.Context, req provider.ConfigureR
 func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		newCredentialUsernameDataSource,
+		newCredentialVaultAppRoleDataSource,
 	}
 }
 
@@ -130,5 +131,6 @@ func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.D
 func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		newCredentialUsernameResource,
+		newCredentialVaultAppRoleResource,
 	}
 }
