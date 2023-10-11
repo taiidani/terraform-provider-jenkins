@@ -114,7 +114,7 @@ func (d *credentialVaultAppRoleDataSource) Read(ctx context.Context, req datasou
 	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	if data.Domain.IsNull() {
-		data.Domain = basetypes.NewStringValue(defaultValueDomain)
+		data.Domain = basetypes.NewStringValue(defaultCredentialDomain)
 	}
 
 	cred := VaultAppRoleCredentials{}

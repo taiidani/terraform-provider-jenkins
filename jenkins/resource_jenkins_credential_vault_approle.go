@@ -105,7 +105,7 @@ Manages a Vault AppRole credential within Jenkins. This credential may then be r
 				MarkdownDescription: "The domain store to place the credentials into. If not set will default to the global credentials store.",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(defaultValueDomain),
+				Default:             stringdefault.StaticString(defaultCredentialDomain),
 				PlanModifiers: []planmodifier.String{
 					// In-place updates should be possible, but gojenkins does not support move operations
 					stringplanmodifier.RequiresReplace(),

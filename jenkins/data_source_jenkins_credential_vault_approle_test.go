@@ -26,7 +26,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic(t *testing.T) {
 
 				data jenkins_credential_vault_approle foo {
 					name   = jenkins_credential_vault_approle.foo.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
@@ -63,7 +63,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_nested(t *testing.T) {
 
 				data jenkins_credential_vault_approle sub {
 					name   = jenkins_credential_vault_approle.sub.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 					folder = jenkins_credential_vault_approle.sub.folder
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
@@ -98,7 +98,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_basic_namespaced(t *testing.
 
 				data jenkins_credential_vault_approle foo {
 					name   = jenkins_credential_vault_approle.foo.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_vault_approle.foo", "id", "/tf-acc-test-"+randString),
@@ -137,7 +137,7 @@ func TestAccJenkinsCredentialVaultAppRoleDataSource_nested_namespaced(t *testing
 
 				data jenkins_credential_vault_approle sub {
 					name   = jenkins_credential_vault_approle.sub.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 					folder = jenkins_credential_vault_approle.sub.folder
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(

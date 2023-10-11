@@ -53,7 +53,7 @@ func resourceJenkinsCredentialAzureServicePrincipal() *schema.Resource {
 				Type:        schema.TypeString,
 				Description: "The Jenkins domain that the credentials will be added to.",
 				Optional:    true,
-				Default:     "_",
+				Default:     defaultCredentialDomain,
 				// In-place updates should be possible, but gojenkins does not support move operations
 				ForceNew: true,
 			},

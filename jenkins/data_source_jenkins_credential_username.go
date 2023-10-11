@@ -105,7 +105,7 @@ func (d *credentialUsernameDataSource) Read(ctx context.Context, req datasource.
 	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	if data.Domain.IsNull() {
-		data.Domain = basetypes.NewStringValue(defaultValueDomain)
+		data.Domain = basetypes.NewStringValue(defaultCredentialDomain)
 	}
 
 	cred := jenkins.UsernameCredentials{}

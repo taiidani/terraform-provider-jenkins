@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	defaultValueDomain = "_"
+	// defaultCredentialDomain is the default domain that all credentials go into.
+	//
+	// The value represents "All domains" in the Jenkins system.
+	defaultCredentialDomain = "_"
 )
 
 // Provider creates a new Jenkins provider.

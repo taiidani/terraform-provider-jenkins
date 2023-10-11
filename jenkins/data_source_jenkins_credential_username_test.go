@@ -26,7 +26,7 @@ func TestAccJenkinsCredentialUsernameDataSource_basic(t *testing.T) {
 
 				data jenkins_credential_username foo {
 					name   = jenkins_credential_username.foo.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_credential_username.foo", "id", "/tf-acc-test-"+randString),
@@ -63,7 +63,7 @@ func TestAccJenkinsCredentialUsernameDataSource_nested(t *testing.T) {
 
 				data jenkins_credential_username sub {
 					name   = jenkins_credential_username.sub.name
-					domain = "_"
+					domain = "`+defaultCredentialDomain+`"
 					folder = jenkins_credential_username.sub.folder
 				}`, randString, randString),
 				Check: resource.ComposeTestCheckFunc(
