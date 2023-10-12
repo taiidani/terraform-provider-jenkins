@@ -90,6 +90,7 @@ func (r *resourceHelper) schemaCredential(s map[string]schema.Attribute) map[str
 	}
 	s["scope"] = schema.StringAttribute{
 		MarkdownDescription: `The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".`,
+		Optional:            true,
 		Computed:            true,
 		Default:             stringdefault.StaticString("GLOBAL"),
 		Validators: []validator.String{
