@@ -130,6 +130,7 @@ func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.D
 // Resources satisfies the provider.Provider interface for JenkinsProvider.
 func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		newCredentialAzureServicePrincipalResource,
 		newCredentialUsernameResource,
 		newCredentialVaultAppRoleResource,
 	}
