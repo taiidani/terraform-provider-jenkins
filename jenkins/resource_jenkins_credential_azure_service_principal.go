@@ -6,15 +6,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// VaultAppRoleCredentials struct representing credential for storing Vault AppRole role id and secret id
+// AzureServicePrincipalCredentials struct representing credential for storing Azure service credentials
 type AzureServicePrincipalCredentials struct {
 	XMLName     xml.Name                             `xml:"com.microsoft.azure.util.AzureCredentials"`
-	Id          string                               `xml:"id"`
+	ID          string                               `xml:"id"`
 	Scope       string                               `xml:"scope"`
 	Description string                               `xml:"description"`
 	Data        AzureServicePrincipalCredentialsData `xml:"data"`
@@ -33,259 +37,335 @@ type AzureServicePrincipalCredentialsData struct {
 	GraphEndpoint           string `xml:"graphEndpoint"`
 }
 
-func resourceJenkinsCredentialAzureServicePrincipal() *schema.Resource {
-	return &schema.Resource{
-		CreateContext: resourceJenkinsCredentialAzureServicePrincipalCreate,
-		ReadContext:   resourceJenkinsCredentialAzureServicePrincipalRead,
-		UpdateContext: resourceJenkinsCredentialAzureServicePrincipalUpdate,
-		DeleteContext: resourceJenkinsCredentialAzureServicePrincipalDelete,
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceJenkinsCredentialAzureServicePrincipalImport,
-		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The credential id of the Azure serivce principal credential created in Jenkins.",
-				Required:    true,
-				ForceNew:    true,
-			},
-			"domain": {
-				Type:        schema.TypeString,
-				Description: "The Jenkins domain that the credentials will be added to.",
-				Optional:    true,
-				Default:     defaultCredentialDomain,
-				// In-place updates should be possible, but gojenkins does not support move operations
-				ForceNew: true,
-			},
-			"folder": {
-				Type:        schema.TypeString,
-				Description: "The Jenkins folder that the credentials will be added to.",
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"scope": {
-				Type:             schema.TypeString,
-				Description:      "The Jenkins scope assigned to the credentials.",
-				Optional:         true,
-				Default:          "GLOBAL",
-				ValidateDiagFunc: validateCredentialScope,
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "An optional description to help tell similar credentials apart.",
-				Optional:    true,
-			},
-			"subscription_id": {
-				Type:        schema.TypeString,
-				Description: "The Azure subscription id.",
-				Required:    true,
-			},
-			"client_id": {
-				Type:        schema.TypeString,
-				Description: "The client id (application id) of the Azure Service Principal.",
-				Required:    true,
-			},
-			"client_secret": {
-				Type:         schema.TypeString,
-				Description:  "The client secret of the Azure Service Principal. Cannot be used with certificate_id.",
-				Sensitive:    true,
-				Optional:     true,
-				ExactlyOneOf: []string{"client_secret", "certificate_id"},
-			},
-			"certificate_id": {
-				Type:         schema.TypeString,
-				Description:  "The certificate reference of the Azure Service Principal, pointing to a Jenkins certificate credential. Cannot be used with client_secret.",
-				Sensitive:    true,
-				Optional:     true,
-				ExactlyOneOf: []string{"client_secret", "certificate_id"},
-			},
-			"tenant": {
-				Type:        schema.TypeString,
-				Description: "The Azure Tenant ID of the Azure Service Principal.",
-				Required:    true,
-			},
-			"azure_environment_name": {
-				Type:         schema.TypeString,
-				Description:  `The Azure Cloud enviroment name. Allowed values are "Azure", "Azure China", "Azure Germany", "Azure US Government".`,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"Azure", "Azure China", "Azure Germany", "Azure US Government"}, false),
-				Default:      "Azure",
-			},
-			"service_management_url": {
-				Type:        schema.TypeString,
-				Description: "Override the Azure management endpoint URL for the selected Azure environment.",
-				Optional:    true,
-				Default:     "",
-			},
-			"authentication_endpoint": {
-				Type:        schema.TypeString,
-				Description: "Override the Azure Active Directory endpoint for the selected Azure environment.",
-				Optional:    true,
-				Default:     "",
-			},
-			"resource_manager_endpoint": {
-				Type:        schema.TypeString,
-				Description: "Override the Azure resource manager endpoint URL for the selected Azure environment.",
-				Optional:    true,
-				Default:     "",
-			},
-			"graph_endpoint": {
-				Type:        schema.TypeString,
-				Description: "Override the Azure graph endpoint URL for the selected Azure environment.",
-				Optional:    true,
-				Default:     "",
-			},
-		},
+type credentialAzureServicePrincipalResourceModel struct {
+	ID                      types.String `tfsdk:"id"`
+	Name                    types.String `tfsdk:"name"`
+	Folder                  types.String `tfsdk:"folder"`
+	Description             types.String `tfsdk:"description"`
+	Domain                  types.String `tfsdk:"domain"`
+	Scope                   types.String `tfsdk:"scope"`
+	SubscriptionId          types.String `tfsdk:"subscription_id"`
+	ClientId                types.String `tfsdk:"client_id"`
+	ClientSecret            types.String `tfsdk:"client_secret"`
+	CertificateId           types.String `tfsdk:"certificate_id"`
+	Tenant                  types.String `tfsdk:"tenant"`
+	AzureEnvironmentName    types.String `tfsdk:"azure_environment_name"`
+	ServiceManagementURL    types.String `tfsdk:"service_management_url"`
+	AuthenticationEndpoint  types.String `tfsdk:"authentication_endpoint"`
+	ResourceManagerEndpoint types.String `tfsdk:"resource_manager_endpoint"`
+	GraphEndpoint           types.String `tfsdk:"graph_endpoint"`
+}
+
+type credentialAzureServicePrincipalResource struct {
+	*resourceHelper
+}
+
+// Ensure the implementation satisfies the desired interfaces.
+var _ resource.ResourceWithConfigure = &credentialAzureServicePrincipalResource{}
+
+func newCredentialAzureServicePrincipalResource() resource.Resource {
+	return &credentialAzureServicePrincipalResource{
+		resourceHelper: newResourceHelper(),
 	}
 }
 
-func resourceJenkinsCredentialAzureServicePrincipalCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	cm := client.Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
-	// return diag.FromErr(fmt.Errorf("invalid folder name '%s', '%s'", cm.Folder, d.Get("folder").(string)))
+// Metadata should return the full name of the resource.
+func (r *credentialAzureServicePrincipalResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_credential_azure_service_principal"
+}
+
+// Schema should return the schema for this resource.
+func (r *credentialAzureServicePrincipalResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: `
+Manages an Azure Service Principal credential within Jenkins. This credential may then be referenced within jobs that are created.
+
+~> The "client_secret" property may leave plain-text secret id in your state file. If using the property to manage the secret id in Terraform, ensure that your state file is properly secured and encrypted at rest.
+
+~> The Jenkins installation that uses this resource is expected to have the [Azure Credentials Plugin](https://plugins.jenkins.io/azure-credentials/) installed in their system.`,
+		Attributes: r.schemaCredential(map[string]schema.Attribute{
+			"subscription_id": schema.StringAttribute{
+				MarkdownDescription: "The Azure subscription id mapped to the Azure Service Principal.",
+				Required:            true,
+			},
+			"client_id": schema.StringAttribute{
+				MarkdownDescription: "The client id (application id) of the Azure Service Principal.",
+				Required:            true,
+			},
+			"client_secret": schema.StringAttribute{
+				MarkdownDescription: "The client secret of the Azure Service Principal. Cannot be used with `certificate_id`. Has to be specified, if `certificate_id` is not specified.",
+				Sensitive:           true,
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRoot("client_secret"), path.MatchRoot("certificate_id")),
+				},
+			},
+			"certificate_id": schema.StringAttribute{
+				MarkdownDescription: "The certificate reference of the Azure Service Principal, pointing to a Jenkins certificate credential. Cannot be used with `client_secret`. Has to be specified, if `client_secret` is not specified.",
+				Sensitive:           true,
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.MatchRoot("client_secret"), path.MatchRoot("certificate_id")),
+				},
+			},
+			"tenant": schema.StringAttribute{
+				MarkdownDescription: "The Azure Tenant ID of the Azure Service Principal.",
+				Required:            true,
+			},
+			"azure_environment_name": schema.StringAttribute{
+				MarkdownDescription: `The Azure Cloud enviroment name. Allowed values are "Azure", "Azure China", "Azure Germany", "Azure US Government".`,
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("Azure"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("Azure", "Azure China", "Azure Germany", "Azure US Government"),
+				},
+			},
+			"service_management_url": schema.StringAttribute{
+				MarkdownDescription: "Override the Azure management endpoint URL for the selected Azure environment.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+			},
+			"authentication_endpoint": schema.StringAttribute{
+				MarkdownDescription: "Override the Azure Active Directory endpoint for the selected Azure environment.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+			},
+			"resource_manager_endpoint": schema.StringAttribute{
+				MarkdownDescription: "Override the Azure resource manager endpoint URL for the selected Azure environment.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+			},
+			"graph_endpoint": schema.StringAttribute{
+				MarkdownDescription: "Override the Azure graph endpoint URL for the selected Azure environment.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+			},
+		}),
+	}
+}
+
+// Create is called when the provider must create a new resource. Config
+// and planned state values should be read from the
+// CreateRequest and new state values set on the CreateResponse.
+func (r *credentialAzureServicePrincipalResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data credentialAzureServicePrincipalResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
 	// Validate that the folder exists
-	if err := folderExists(ctx, client, cm.Folder); err != nil {
-		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
+	if err := folderExists(ctx, r.client, cm.Folder); err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Folder",
+			fmt.Sprintf("An invalid folder name %q was specified. ", cm.Folder)+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
 	credData := AzureServicePrincipalCredentialsData{
-		SubscriptionId:          d.Get("subscription_id").(string),
-		ClientId:                d.Get("client_id").(string),
-		ClientSecret:            d.Get("client_secret").(string),
-		CertificateId:           d.Get("certificate_id").(string),
-		Tenant:                  d.Get("tenant").(string),
-		AzureEnvironmentName:    d.Get("azure_environment_name").(string),
-		ServiceManagementURL:    d.Get("service_management_url").(string),
-		AuthenticationEndpoint:  d.Get("authentication_endpoint").(string),
-		ResourceManagerEndpoint: d.Get("resource_manager_endpoint").(string),
-		GraphEndpoint:           d.Get("graph_endpoint").(string),
+		SubscriptionId:          data.SubscriptionId.ValueString(),
+		ClientId:                data.ClientId.ValueString(),
+		ClientSecret:            data.ClientSecret.ValueString(),
+		CertificateId:           data.CertificateId.ValueString(),
+		Tenant:                  data.Tenant.ValueString(),
+		AzureEnvironmentName:    data.AzureEnvironmentName.ValueString(),
+		ServiceManagementURL:    data.ServiceManagementURL.ValueString(),
+		AuthenticationEndpoint:  data.AuthenticationEndpoint.ValueString(),
+		ResourceManagerEndpoint: data.ResourceManagerEndpoint.ValueString(),
+		GraphEndpoint:           data.GraphEndpoint.ValueString(),
 	}
 
 	cred := AzureServicePrincipalCredentials{
-		Id:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
 		Data:        credData,
 	}
 
-	domain := d.Get("domain").(string)
-	err := cm.Add(ctx, domain, cred)
+	err := cm.Add(ctx, data.Domain.ValueString(), cred)
 	if err != nil {
-		return diag.Errorf("Could not create Azure service principal credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Create Resource",
+			"An unexpected error occurred while creating the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
-	return resourceJenkinsCredentialAzureServicePrincipalRead(ctx, d, meta)
+	// Convert from the API data model to the Terraform data model
+	// and set any unknown attribute values.
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialAzureServicePrincipalRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Read is called when the provider must read resource values in order
+// to update state. Planned state values should be read from the
+// ReadRequest and new state values set on the ReadResponse.
+func (r *credentialAzureServicePrincipalResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data credentialAzureServicePrincipalResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	cred := AzureServicePrincipalCredentials{}
-	err := cm.GetSingle(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-		&cred,
-	)
-
+	err := cm.GetSingle(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "404") {
 			// Job does not exist
-			d.SetId("")
-			return nil
+			resp.State.RemoveResource(ctx)
+			return
 		}
 
-		return diag.Errorf("Could not read Azure service principal credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Refresh Resource",
+			"An unexpected error occurred while parsing the resource read response. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
-	_ = d.Set("description", cred.Description)
-	_ = d.Set("scope", cred.Scope)
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+	data.Scope = types.StringValue(cred.Scope)
+	data.Description = types.StringValue(cred.Description)
 
 	// NOTE: We are NOT setting the password here, as the password returned by GetSingle is garbage
 	// Password only applies to Create/Update operations if the "password" property is non-empty
 
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialAzureServicePrincipalUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Update is called to update the state of the resource. Config, planned
+// state, and prior state values should be read from the
+// UpdateRequest and new state values set on the UpdateResponse.
+func (r *credentialAzureServicePrincipalResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data credentialAzureServicePrincipalResourceModel
 
-	domain := d.Get("domain").(string)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	credData := AzureServicePrincipalCredentialsData{
-		SubscriptionId:          d.Get("subscription_id").(string),
-		ClientId:                d.Get("client_id").(string),
-		Tenant:                  d.Get("tenant").(string),
-		AzureEnvironmentName:    d.Get("azure_environment_name").(string),
-		ServiceManagementURL:    d.Get("service_management_url").(string),
-		AuthenticationEndpoint:  d.Get("authentication_endpoint").(string),
-		ResourceManagerEndpoint: d.Get("resource_manager_endpoint").(string),
-		GraphEndpoint:           d.Get("graph_endpoint").(string),
+		SubscriptionId:          data.SubscriptionId.ValueString(),
+		ClientId:                data.ClientId.ValueString(),
+		Tenant:                  data.Tenant.ValueString(),
+		AzureEnvironmentName:    data.AzureEnvironmentName.ValueString(),
+		ServiceManagementURL:    data.ServiceManagementURL.ValueString(),
+		AuthenticationEndpoint:  data.AuthenticationEndpoint.ValueString(),
+		ResourceManagerEndpoint: data.ResourceManagerEndpoint.ValueString(),
+		GraphEndpoint:           data.GraphEndpoint.ValueString(),
 	}
 
 	cred := AzureServicePrincipalCredentials{
-		Id:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
 		Data:        credData,
 	}
 
 	// Only enforce the password if it is non-empty
-	if d.Get("client_secret").(string) != "" {
-		cred.Data.ClientSecret = d.Get("client_secret").(string)
+	if data.ClientSecret.ValueString() != "" {
+		cred.Data.ClientSecret = data.ClientSecret.ValueString()
 	}
 
-	if d.Get("certificate_id").(string) != "" {
-		cred.Data.ClientId = d.Get("certificate_id").(string)
+	if data.CertificateId.ValueString() != "" {
+		cred.Data.ClientId = data.CertificateId.ValueString()
 	}
 
-	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
+	err := cm.Update(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update Azure Service Principal credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Update Resource",
+			"An unexpected error occurred while attempting to update the resource. "+
+				"Please retry the operation or report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.Id))
-	return resourceJenkinsCredentialAzureServicePrincipalRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialAzureServicePrincipalDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Delete is called when the provider must delete the resource. Config
+// values may be read from the DeleteRequest.
+//
+// If execution completes without error, the framework will automatically
+// call DeleteResponse.State.RemoveResource(), so it can be omitted
+// from provider logic.
+func (r *credentialAzureServicePrincipalResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data credentialAzureServicePrincipalResourceModel
 
-	err := cm.Delete(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-	)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	err := cm.Delete(ctx, data.Domain.ValueString(), data.Name.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
-	}
+		resp.Diagnostics.AddError(
+			"Unable to Delete Resource",
+			"An unexpected error occurred while deleting the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
 
-	return nil
+		return
+	}
 }
 
-func resourceJenkinsCredentialAzureServicePrincipalImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ret := []*schema.ResourceData{d}
-
-	splitID := strings.Split(d.Id(), "/")
+// ImportState is called when performing import operations of existing resources.
+func (r *credentialAzureServicePrincipalResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitID := strings.Split(req.ID, "/")
 	if len(splitID) < 2 {
-		return ret, fmt.Errorf("Import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: \"[<folder>/]<domain>/<name>\". Got: %q", req.ID),
+		)
+		return
 	}
 
 	name := splitID[len(splitID)-1]
-	_ = d.Set("name", name)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), name)...)
 
 	domain := splitID[len(splitID)-2]
-	_ = d.Set("domain", domain)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("domain"), domain)...)
 
 	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	_ = d.Set("folder", folder)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("folder"), folder)...)
 
-	d.SetId(generateCredentialID(folder, name))
-	return ret, nil
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), generateCredentialID(folder, name))...)
 }

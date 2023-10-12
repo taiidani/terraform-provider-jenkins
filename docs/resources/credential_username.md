@@ -38,8 +38,8 @@ resource "jenkins_credential_username" "example" {
 - `domain` (String) The domain store to place the credentials into. If not set will default to the global credentials store.
 - `folder` (String) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
 - `password` (String, Sensitive) The password to be associated with the credentials. If empty then the password property will become unmanaged and expected to be set manually within Jenkins. If set then the password will be updated only upon changes -- if the password is set manually within Jenkins then it will not reconcile this drift until the next time the password property is changed.
+- `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 
 ### Read-Only
 
 - `id` (String) The full canonical job path, e.g. `/job/job-name`
-- `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".

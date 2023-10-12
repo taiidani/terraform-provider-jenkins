@@ -55,6 +55,10 @@ run "credentials" {
   }
 
   assert {
+    condition     = output.azure_service_principal.client_id == "123"
+    error_message = "${nonsensitive(output.azure_service_principal.client_id)} did not contain expected \"123\" value"
+  }
+  assert {
     condition     = output.username.username == jenkins_credential_username.global.username
     error_message = "${output.username.username} data value did not match resource value"
   }

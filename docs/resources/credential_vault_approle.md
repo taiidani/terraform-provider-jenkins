@@ -41,9 +41,9 @@ resource "jenkins_credential_vault_approle" "example" {
 - `folder` (String) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
 - `namespace` (String) The Vault namespace of the approle credential.
 - `path` (String) The unique name of the approle auth backend. Defaults to `approle`.
+- `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 - `secret_id` (String, Sensitive) The secret_id to be associated with the credentials. If empty then the secret_id property will become unmanaged and expected to be set manually within Jenkins. If set then the secret_id will be updated only upon changes -- if the secret_id is set manually within Jenkins then it will not reconcile this drift until the next time the secret_id property is changed.
 
 ### Read-Only
 
 - `id` (String) The full canonical job path, e.g. `/job/job-name`
-- `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
