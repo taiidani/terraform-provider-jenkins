@@ -6,14 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -32,10 +28,10 @@ type VaultAppRoleCredentials struct {
 type credentialVaultAppRoleResourceModel struct {
 	ID          types.String `tfsdk:"id"`
 	Name        types.String `tfsdk:"name"`
-	Domain      types.String `tfsdk:"domain"`
 	Folder      types.String `tfsdk:"folder"`
-	Scope       types.String `tfsdk:"scope"`
 	Description types.String `tfsdk:"description"`
+	Domain      types.String `tfsdk:"domain"`
+	Scope       types.String `tfsdk:"scope"`
 	Namespace   types.String `tfsdk:"namespace"`
 	Path        types.String `tfsdk:"path"`
 	RoleID      types.String `tfsdk:"role_id"`
@@ -43,38 +39,21 @@ type credentialVaultAppRoleResourceModel struct {
 }
 
 type credentialVaultAppRoleResource struct {
-	client *jenkinsAdapter
+	*resourceHelper
 }
 
+// Ensure the implementation satisfies the desired interfaces.
 var _ resource.ResourceWithConfigure = &credentialVaultAppRoleResource{}
 
 func newCredentialVaultAppRoleResource() resource.Resource {
-	return &credentialVaultAppRoleResource{}
+	return &credentialVaultAppRoleResource{
+		resourceHelper: newResourceHelper(),
+	}
 }
 
 // Metadata should return the full name of the resource.
 func (r *credentialVaultAppRoleResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_credential_vault_approle"
-}
-
-// Configure should register the client for the resource.
-func (r *credentialVaultAppRoleResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*jenkinsAdapter)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *jenkinsAdapter, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-
-		return
-	}
-
-	r.client = client
 }
 
 // Schema should return the schema for this resource.
@@ -86,52 +65,7 @@ Manages a Vault AppRole credential within Jenkins. This credential may then be r
 ~> The "secret_id" property may leave plain-text secret id in your state file. If using the property to manage the secret id in Terraform, ensure that your state file is properly secured and encrypted at rest.
 
 ~> The Jenkins installation that uses this resource is expected to have the [Hashicorp Vault Plugin](https://plugins.jenkins.io/hashicorp-vault-plugin/) installed in their system.`,
-		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:            true,
-				MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
-			"name": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"domain": schema.StringAttribute{
-				MarkdownDescription: "The domain store to place the credentials into. If not set will default to the global credentials store.",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString(defaultValueDomain),
-				PlanModifiers: []planmodifier.String{
-					// In-place updates should be possible, but gojenkins does not support move operations
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"folder": schema.StringAttribute{
-				MarkdownDescription: "The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.",
-				Optional:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-			},
-			"scope": schema.StringAttribute{
-				MarkdownDescription: `The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".`,
-				Computed:            true,
-				Default:             stringdefault.StaticString("GLOBAL"),
-				Validators: []validator.String{
-					stringvalidator.OneOf(supportedCredentialScopes...),
-				},
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "A human readable description of the credentials being stored.",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("Managed by Terraform"),
-			},
+		Attributes: r.schemaCredential(map[string]schema.Attribute{
 			"namespace": schema.StringAttribute{
 				MarkdownDescription: "The Vault namespace of the approle credential.",
 				Optional:            true,
@@ -153,7 +87,7 @@ Manages a Vault AppRole credential within Jenkins. This credential may then be r
 				Optional:            true,
 				Sensitive:           true,
 			},
-		},
+		}),
 	}
 }
 
