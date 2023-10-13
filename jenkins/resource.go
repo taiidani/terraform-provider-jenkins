@@ -3,8 +3,10 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -43,6 +45,29 @@ func (r *resourceHelper) Configure(ctx context.Context, req resource.ConfigureRe
 	}
 
 	r.client = client
+}
+
+// ImportState is called when performing import operations of existing resources.
+func (r *resourceHelper) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	splitID := strings.Split(req.ID, "/")
+	if len(splitID) < 2 {
+		resp.Diagnostics.AddError(
+			"Unexpected Import Identifier",
+			fmt.Sprintf("Expected import identifier with format: \"[<folder>/]<domain>/<name>\". Got: %q", req.ID),
+		)
+		return
+	}
+
+	name := splitID[len(splitID)-1]
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), name)...)
+
+	domain := splitID[len(splitID)-2]
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("domain"), domain)...)
+
+	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("folder"), folder)...)
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), generateCredentialID(folder, name))...)
 }
 
 func (r *resourceHelper) schema(s map[string]schema.Attribute) map[string]schema.Attribute {

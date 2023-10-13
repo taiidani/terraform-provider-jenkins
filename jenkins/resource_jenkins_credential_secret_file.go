@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -230,27 +229,4 @@ func (r *credentialSecretFileResource) Delete(ctx context.Context, req resource.
 
 		return
 	}
-}
-
-// ImportState is called when performing import operations of existing resources.
-func (r *credentialSecretFileResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	splitID := strings.Split(req.ID, "/")
-	if len(splitID) < 2 {
-		resp.Diagnostics.AddError(
-			"Unexpected Import Identifier",
-			fmt.Sprintf("Expected import identifier with format: \"[<folder>/]<domain>/<name>\". Got: %q", req.ID),
-		)
-		return
-	}
-
-	name := splitID[len(splitID)-1]
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("name"), name)...)
-
-	domain := splitID[len(splitID)-2]
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("domain"), domain)...)
-
-	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("folder"), folder)...)
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), generateCredentialID(folder, name))...)
 }
