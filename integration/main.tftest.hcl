@@ -67,6 +67,10 @@ run "credentials" {
     error_message = "${nonsensitive(output.secret_text.secret)} did not contain expected \"barsoom\" value"
   }
   assert {
+    condition     = output.ssh.username == "example-username"
+    error_message = "${nonsensitive(output.ssh.username)} did not contain expected \"example-username\" value"
+  }
+  assert {
     condition     = output.username.username == jenkins_credential_username.global.username
     error_message = "${output.username.username} data value did not match resource value"
   }

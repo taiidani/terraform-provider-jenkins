@@ -133,6 +133,7 @@ func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resou
 		newCredentialAzureServicePrincipalResource,
 		newCredentialSecretFileResource,
 		newCredentialSecretTextResource,
+		newCredentialSSHResource,
 		newCredentialUsernameResource,
 		newCredentialVaultAppRoleResource,
 	}
