@@ -50,7 +50,6 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"jenkins_credential_secret_file": resourceJenkinsCredentialSecretFile(),
 			"jenkins_credential_secret_text": resourceJenkinsCredentialSecretText(),
 			"jenkins_credential_ssh":         resourceJenkinsCredentialSSH(),
 			"jenkins_folder":                 resourceJenkinsFolder(),

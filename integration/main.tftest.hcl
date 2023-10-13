@@ -59,6 +59,10 @@ run "credentials" {
     error_message = "${nonsensitive(output.azure_service_principal.client_id)} did not contain expected \"123\" value"
   }
   assert {
+    condition     = output.secret_file.filename == "secret-file.txt"
+    error_message = "${nonsensitive(output.secret_file.filename)} did not contain expected \"secret-file.txt\" value"
+  }
+  assert {
     condition     = output.username.username == jenkins_credential_username.global.username
     error_message = "${output.username.username} data value did not match resource value"
   }
