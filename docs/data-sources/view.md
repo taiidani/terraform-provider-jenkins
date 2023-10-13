@@ -3,12 +3,12 @@
 page_title: "jenkins_view Data Source - terraform-provider-jenkins"
 subcategory: ""
 description: |-
-  
+  Get the attributes of a view within Jenkins.
 ---
 
 # jenkins_view (Data Source)
 
-
+Get the attributes of a view within Jenkins.
 
 
 
@@ -17,14 +17,14 @@ description: |-
 
 ### Required
 
-- `name` (String) The unique name of the Jenkins view.
+- `name` (String) The name of the resource being read.
 
 ### Optional
 
-- `folder` (String) The folder namespace that the job exists in.
+- `folder` (String) The folder namespace containing this resource.
 
 ### Read-Only
 
-- `description` (String) The description for the view.
-- `id` (String) The ID of this resource.
+- `description` (String) A human readable description of the resource.
+- `id` (String) The unique name of this view.
 - `url` (String) The url for the view.

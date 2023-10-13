@@ -29,15 +29,17 @@ run "jobs" {
     condition     = chomp(coalesce(data.jenkins_job.pipeline_scm.template, "")) == chomp(local.pipeline_scm_template)
     error_message = "${data.jenkins_job.pipeline_scm.name} produced inconsistent XML"
   }
-
   assert {
     condition     = chomp(data.jenkins_job.pipeline_inline.template) == chomp(local.pipeline_inline_template)
     error_message = "${data.jenkins_job.pipeline_inline.name} produced inconsistent XML"
   }
-
   assert {
     condition     = chomp(data.jenkins_job.freestyle.template) == chomp(local.freestyle_template)
     error_message = "${data.jenkins_job.freestyle.name} produced inconsistent XML"
+  }
+  assert {
+    condition     = output.view.name == "example"
+    error_message = "${output.view.name} did not contain expected \"example\" value"
   }
 }
 

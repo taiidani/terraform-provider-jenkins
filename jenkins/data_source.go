@@ -41,35 +41,58 @@ func (d *dataSourceHelper) Configure(ctx context.Context, req datasource.Configu
 }
 
 func (d *dataSourceHelper) schema(s map[string]schema.Attribute) map[string]schema.Attribute {
-	s["id"] = schema.StringAttribute{
-		Computed:            true,
-		MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
+	if _, ok := s["id"]; !ok {
+		s["id"] = schema.StringAttribute{
+			Computed:            true,
+			MarkdownDescription: "The full canonical job path, e.g. `/job/job-name`",
+		}
 	}
-	s["name"] = schema.StringAttribute{
-		Required:            true,
-		MarkdownDescription: "The name of the resource being read.",
+	if _, ok := s["name"]; !ok {
+		s["name"] = schema.StringAttribute{
+			Required:            true,
+			MarkdownDescription: "The name of the resource being read.",
+		}
 	}
-	s["folder"] = schema.StringAttribute{
-		MarkdownDescription: "The folder namespace containing this resource.",
-		Optional:            true,
+	if _, ok := s["folder"]; !ok {
+		s["folder"] = schema.StringAttribute{
+			MarkdownDescription: "The folder namespace containing this resource.",
+			Optional:            true,
+		}
 	}
-	s["description"] = schema.StringAttribute{
-		MarkdownDescription: "A human readable description of the credentials being stored.",
-		Computed:            true,
+	if _, ok := s["description"]; !ok {
+		s["description"] = schema.StringAttribute{
+			MarkdownDescription: "A human readable description of the resource.",
+			Computed:            true,
+		}
 	}
 
 	return s
 }
 
 func (d *dataSourceHelper) schemaCredential(s map[string]schema.Attribute) map[string]schema.Attribute {
-	s = d.schema(s)
-	s["domain"] = schema.StringAttribute{
-		MarkdownDescription: "The domain store containing this resource.",
-		Optional:            true,
+	// Override the base schema with more specific messaging
+	if _, ok := s["description"]; !ok {
+		s["description"] = schema.StringAttribute{
+			MarkdownDescription: "A human readable description of the credentials being stored.",
+			Computed:            true,
+		}
 	}
-	s["scope"] = schema.StringAttribute{
-		MarkdownDescription: `The visibility of the credentials to Jenkins agents. This will be either "GLOBAL" or "SYSTEM".`,
-		Computed:            true,
+
+	// Pull in the base schema
+	s = d.schema(s)
+
+	// Add credential-specific attributes
+	if _, ok := s["domain"]; !ok {
+		s["domain"] = schema.StringAttribute{
+			MarkdownDescription: "The domain store containing this resource.",
+			Optional:            true,
+		}
+	}
+	if _, ok := s["scope"]; !ok {
+		s["scope"] = schema.StringAttribute{
+			MarkdownDescription: `The visibility of the credentials to Jenkins agents. This will be either "GLOBAL" or "SYSTEM".`,
+			Computed:            true,
+		}
 	}
 
 	return s

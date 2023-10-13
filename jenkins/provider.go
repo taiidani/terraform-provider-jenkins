@@ -46,7 +46,6 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"jenkins_folder": dataSourceJenkinsFolder(),
 			"jenkins_job":    dataSourceJenkinsJob(),
-			"jenkins_view":   dataSourceJenkinsView(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
