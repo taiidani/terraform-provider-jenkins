@@ -137,5 +137,6 @@ func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resou
 		newCredentialSSHResource,
 		newCredentialUsernameResource,
 		newCredentialVaultAppRoleResource,
+		newViewResource,
 	}
 }

@@ -29,14 +29,14 @@ resource "jenkins_credential_username" "example" {
 
 ### Required
 
-- `name` (String) The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.
+- `name` (String) The name of the resource being created. This maps to the ID property within Jenkins, and cannot be changed once set.
 - `username` (String) The username to be associated with the credentials.
 
 ### Optional
 
 - `description` (String) A human readable description of the credentials being stored.
 - `domain` (String) The domain store to place the credentials into. If not set will default to the global credentials store.
-- `folder` (String) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
+- `folder` (String) The folder namespace to store the resource in. If not set will default to global Jenkins.
 - `password` (String, Sensitive) The password to be associated with the credentials. If empty then the password property will become unmanaged and expected to be set manually within Jenkins. If set then the password will be updated only upon changes -- if the password is set manually within Jenkins then it will not reconcile this drift until the next time the password property is changed.
 - `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 

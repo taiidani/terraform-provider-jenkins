@@ -51,7 +51,6 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"jenkins_folder": resourceJenkinsFolder(),
 			"jenkins_job":    resourceJenkinsJob(),
-			"jenkins_view":   resourceJenkinsView(),
 		},
 
 		ConfigureContextFunc: configureProvider,

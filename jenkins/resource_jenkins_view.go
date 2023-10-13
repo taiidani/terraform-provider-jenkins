@@ -3,129 +3,221 @@ package jenkins
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func resourceJenkinsView() *schema.Resource {
-	return &schema.Resource{
-		CreateContext: resourceJenkinsViewCreate,
-		ReadContext:   resourceJenkinsViewRead,
-		UpdateContext: resourceJenkinsViewUpdate,
-		DeleteContext: resourceJenkinsViewDelete,
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
-		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+type ViewResourceModel struct {
+	ID               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Folder           types.String `tfsdk:"folder"`
+	Description      types.String `tfsdk:"description"`
+	AssignedProjects types.List   `tfsdk:"assigned_projects"`
+	URL              types.String `tfsdk:"url"`
+}
+
+type ViewResource struct {
+	*resourceHelper
+}
+
+// Ensure the implementation satisfies the desired interfaces.
+var _ resource.ResourceWithConfigure = &ViewResource{}
+
+func newViewResource() resource.Resource {
+	return &ViewResource{
+		resourceHelper: newResourceHelper(),
+	}
+}
+
+// Metadata should return the full name of the resource.
+func (r *ViewResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_view"
+}
+
+// Schema should return the schema for this resource.
+func (r *ViewResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: `
+Manages a view within Jenkins.
+
+~> Due to API client limitations, updates to some attributes may be restricted.`,
+		Attributes: r.schema(map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The unique name of this view.",
 			},
-			"assigned_projects": {
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+			"assigned_projects": schema.ListAttribute{
+				MarkdownDescription: "The list of projects assigned to the view.",
+				Optional:            true,
+				ElementType:         types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.RequiresReplace(),
 				},
 			},
-			"folder": {
-				Type:             schema.TypeString,
-				Description:      "The folder namespace that the job exists in.",
-				Optional:         true,
-				ValidateDiagFunc: validateFolderName,
+			"description": schema.StringAttribute{
+				MarkdownDescription: "The description for the view.",
+				Computed:            true, // No way to update or set description with the gojenkins client at the moment.
 			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "The description for the view.",
-				Computed:    true, // No way to update or set description with the gojenkins client at the moment.
+			"url": schema.StringAttribute{
+				MarkdownDescription: "The url for the view.",
+				Computed:            true,
 			},
-			"url": {
-				Type:        schema.TypeString,
-				Description: "The url for the view.",
-				Computed:    true,
-			},
-		},
+		}),
 	}
 }
 
-func resourceJenkinsViewCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	cm := client.Credentials()
-	name := d.Get("name").(string)
+// Create is called when the provider must create a new resource. Config
+// and planned state values should be read from the
+// CreateRequest and new state values set on the CreateResponse.
+func (r *ViewResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data ViewResourceModel
 
-	view, err := cm.J.CreateView(ctx, name, gojenkins.LIST_VIEW)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("Error creating the Jenkins View: %s", err))
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	assigedProjects := d.Get("assigned_projects").([]interface{})
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	// Validate that the folder exists
+	if err := folderExists(ctx, r.client, cm.Folder); err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Folder",
+			fmt.Sprintf("An invalid folder name %q was specified. ", cm.Folder)+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
+	}
+
+	view, err := cm.J.CreateView(ctx, data.Name.ValueString(), gojenkins.LIST_VIEW)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Create Resource",
+			"An unexpected error occurred while creating the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
+	}
+
+	assigedProjects := data.AssignedProjects.Elements()
 	for _, project := range assigedProjects {
-		_, err := view.AddJob(ctx, project.(string))
+		_, err := view.AddJob(ctx, project.String())
 		if err != nil {
-			return diag.FromErr(fmt.Errorf("Error adding %s to Jenkins view %s: %s", project.(string), name, err))
+			resp.Diagnostics.AddError(
+				"Unable to Assign View Projects",
+				fmt.Sprintf("Error adding %s to Jenkins view %s: %s", project.String(), data.Name.ValueString(), err),
+			)
+			return
 		}
 	}
-	d.SetId(view.GetName())
-	return resourceJenkinsViewRead(ctx, d, meta)
+
+	// Convert from the API data model to the Terraform data model
+	// and set any unknown attribute values.
+	data.ID = types.StringValue(view.GetName())
+	data.Name = types.StringValue(view.GetName())
+	data.Description = types.StringValue(view.GetDescription())
+	data.URL = types.StringValue(view.GetUrl())
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsViewRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	name, _ := parseCanonicalJobID(d.Id())
+// Read is called when the provider must read resource values in order
+// to update state. Planned state values should be read from the
+// ReadRequest and new state values set on the ReadResponse.
+func (r *ViewResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data ViewResourceModel
 
-	log.Printf("[DEBUG] jenkins::read - Looking for view %q", name)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	view, err := client.GetView(ctx, name)
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	view, err := cm.J.GetView(ctx, data.ID.ValueString())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "404") {
-			// View does not exist
-			d.SetId("")
-			return nil
+		if strings.HasSuffix(err.Error(), "404") {
+			// Job does not exist
+			resp.State.RemoveResource(ctx)
+			return
 		}
 
-		return diag.FromErr(fmt.Errorf("jenkins::read - View %q does not exist: %w", name, err))
+		resp.Diagnostics.AddError(
+			"Unable to Refresh Resource",
+			"An unexpected error occurred while parsing the resource read response. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+		return
 	}
 
-	description := view.GetDescription()
-	err = d.Set("description", description)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::read - Description could not be set for View %q, %w", name, err))
-	}
+	data.ID = types.StringValue(view.GetName())
+	data.Name = types.StringValue(view.GetName())
+	data.Description = types.StringValue(view.GetDescription())
+	data.URL = types.StringValue(view.GetUrl())
 
-	url := view.GetUrl()
-	err = d.Set("url", url)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::read - Url could not be set for View %q, %w", name, err))
-	}
-
-	name = view.GetName()
-	err = d.Set("name", name)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::read - Name could not be set for View %q, %w", name, err))
-	}
-
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsViewUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil // No update-functionality in gojenkins.
-}
+// Update is called to update the state of the resource. Config, planned
+// state, and prior state values should be read from the
+// UpdateRequest and new state values set on the UpdateResponse.
+func (r *ViewResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data ViewResourceModel
 
-func resourceJenkinsViewDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	cm := client.Credentials()
-	name := d.Get("name").(string)
-
-	_, err := cm.J.Requester.Post(ctx, "/view/"+name+"/doDelete", nil, nil, nil)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("error deleting the Jenkins view: %s", err))
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	return nil
+	// Skip any updating of the resource.
+	// No update-functionality in gojenkins.
+
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// Delete is called when the provider must delete the resource. Config
+// values may be read from the DeleteRequest.
+//
+// If execution completes without error, the framework will automatically
+// call DeleteResponse.State.RemoveResource(), so it can be omitted
+// from provider logic.
+func (r *ViewResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data ViewResourceModel
+
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	_, err := cm.J.Requester.Post(ctx, "/view/"+data.Name.ValueString()+"/doDelete", nil, nil, nil)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Delete Resource",
+			"An unexpected error occurred while deleting the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
+	}
 }

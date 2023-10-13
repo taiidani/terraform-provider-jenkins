@@ -3,12 +3,15 @@
 page_title: "jenkins_view Resource - terraform-provider-jenkins"
 subcategory: ""
 description: |-
-  
+  Manages a view within Jenkins.
+  ~> Due to API client limitations, updates to some attributes may be restricted.
 ---
 
 # jenkins_view (Resource)
 
+Manages a view within Jenkins.
 
+~> Due to API client limitations, updates to some attributes may be restricted.
 
 
 
@@ -17,15 +20,15 @@ description: |-
 
 ### Required
 
-- `name` (String)
+- `name` (String) The name of the resource being created. This maps to the ID property within Jenkins, and cannot be changed once set.
 
 ### Optional
 
-- `assigned_projects` (List of String)
-- `folder` (String) The folder namespace that the job exists in.
+- `assigned_projects` (List of String) The list of projects assigned to the view.
+- `folder` (String) The folder namespace to store the resource in. If not set will default to global Jenkins.
 
 ### Read-Only
 
 - `description` (String) The description for the view.
-- `id` (String) The ID of this resource.
+- `id` (String) The unique name of this view.
 - `url` (String) The url for the view.

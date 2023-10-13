@@ -34,7 +34,7 @@ resource "jenkins_credential_azure_service_principal" "foo" {
 ### Required
 
 - `client_id` (String) The client id (application id) of the Azure Service Principal.
-- `name` (String) The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.
+- `name` (String) The name of the resource being created. This maps to the ID property within Jenkins, and cannot be changed once set.
 - `subscription_id` (String) The Azure subscription id mapped to the Azure Service Principal.
 - `tenant` (String) The Azure Tenant ID of the Azure Service Principal.
 
@@ -46,7 +46,7 @@ resource "jenkins_credential_azure_service_principal" "foo" {
 - `client_secret` (String, Sensitive) The client secret of the Azure Service Principal. Cannot be used with `certificate_id`. Has to be specified, if `certificate_id` is not specified.
 - `description` (String) A human readable description of the credentials being stored.
 - `domain` (String) The domain store to place the credentials into. If not set will default to the global credentials store.
-- `folder` (String) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
+- `folder` (String) The folder namespace to store the resource in. If not set will default to global Jenkins.
 - `graph_endpoint` (String) Override the Azure graph endpoint URL for the selected Azure environment.
 - `resource_manager_endpoint` (String) Override the Azure resource manager endpoint URL for the selected Azure environment.
 - `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
