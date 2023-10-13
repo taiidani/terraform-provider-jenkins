@@ -6,175 +6,219 @@ import (
 	"strings"
 
 	jenkins "github.com/bndr/gojenkins"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func resourceJenkinsCredentialSecretText() *schema.Resource {
-	return &schema.Resource{
-		CreateContext: resourceJenkinsCredentialSecretTextCreate,
-		ReadContext:   resourceJenkinsCredentialSecretTextRead,
-		UpdateContext: resourceJenkinsCredentialSecretTextUpdate,
-		DeleteContext: resourceJenkinsCredentialSecretTextDelete,
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceJenkinsCredentialSecretTextImport,
-		},
-		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Description: "The identifier assigned to the credentials.",
-				Required:    true,
-				ForceNew:    true,
-			},
-			"domain": {
-				Type:        schema.TypeString,
-				Description: "The domain namespace that the credentials will be added to.",
-				Optional:    true,
-				Default:     defaultCredentialDomain,
-				// In-place updates should be possible, but gojenkins does not support move operations
-				ForceNew: true,
-			},
-			"folder": {
-				Type:        schema.TypeString,
-				Description: "The folder namespace that the credentials will be added to.",
-				Optional:    true,
-				ForceNew:    true,
-			},
-			"scope": {
-				Type:             schema.TypeString,
-				Description:      "The Jenkins scope assigned to the credentials.",
-				Optional:         true,
-				Default:          "GLOBAL",
-				ValidateDiagFunc: validateCredentialScope,
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Description: "The credentials descriptive text.",
-				Optional:    true,
-				Default:     "Managed by Terraform",
-			},
-			"secret": {
-				Type:        schema.TypeString,
-				Description: "The credentials secret text. This is mandatory.",
-				Required:    true,
-				Sensitive:   true,
-			},
-		},
+type credentialSecretTextResourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Folder      types.String `tfsdk:"folder"`
+	Description types.String `tfsdk:"description"`
+	Domain      types.String `tfsdk:"domain"`
+	Scope       types.String `tfsdk:"scope"`
+	Secret      types.String `tfsdk:"secret"`
+}
+
+type credentialSecretTextResource struct {
+	*resourceHelper
+}
+
+// Ensure the implementation satisfies the desired interfaces.
+var _ resource.ResourceWithConfigure = &credentialSecretTextResource{}
+
+func newCredentialSecretTextResource() resource.Resource {
+	return &credentialSecretTextResource{
+		resourceHelper: newResourceHelper(),
 	}
 }
 
-func resourceJenkinsCredentialSecretTextCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(jenkinsClient)
-	cm := client.Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Metadata should return the full name of the resource.
+func (r *credentialSecretTextResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_credential_secret_text"
+}
+
+// Schema should return the schema for this resource.
+func (r *credentialSecretTextResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: `
+Manages a secret text credential within Jenkins. This secret text may then be referenced within jobs that are created.`,
+		Attributes: r.schemaCredential(map[string]schema.Attribute{
+			"secret": schema.StringAttribute{
+				MarkdownDescription: "The secret text to be associated with the credentials.",
+				Required:            true,
+				Sensitive:           true,
+			},
+		}),
+	}
+}
+
+// Create is called when the provider must create a new resource. Config
+// and planned state values should be read from the
+// CreateRequest and new state values set on the CreateResponse.
+func (r *credentialSecretTextResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data credentialSecretTextResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	// Validate that the folder exists
-	if err := folderExists(ctx, client, cm.Folder); err != nil {
-		return diag.FromErr(fmt.Errorf("invalid folder name '%s' specified: %w", cm.Folder, err))
+	if err := folderExists(ctx, r.client, cm.Folder); err != nil {
+		resp.Diagnostics.AddError(
+			"Invalid Folder",
+			fmt.Sprintf("An invalid folder name %q was specified. ", cm.Folder)+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
 	cred := jenkins.StringCredentials{
-		ID:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
-		Secret:      d.Get("secret").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
+		Secret:      data.Secret.ValueString(),
 	}
 
-	domain := d.Get("domain").(string)
-	err := cm.Add(ctx, domain, cred)
+	err := cm.Add(ctx, data.Domain.ValueString(), cred)
 	if err != nil {
-		return diag.Errorf("Could not create secret text credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Create Resource",
+			"An unexpected error occurred while creating the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialSecretTextRead(ctx, d, meta)
+	// Convert from the API data model to the Terraform data model
+	// and set any unknown attribute values.
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+
+	// Save data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialSecretTextRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Read is called when the provider must read resource values in order
+// to update state. Planned state values should be read from the
+// ReadRequest and new state values set on the ReadResponse.
+func (r *credentialSecretTextResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data credentialSecretTextResourceModel
+
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
 
 	cred := jenkins.StringCredentials{}
-	err := cm.GetSingle(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-		&cred,
-	)
-
+	err := cm.GetSingle(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
 		if strings.HasSuffix(err.Error(), "404") {
 			// Job does not exist
-			d.SetId("")
-			return nil
+			resp.State.RemoveResource(ctx)
+			return
 		}
 
-		return diag.Errorf("Could not read secret text credentials: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Refresh Resource",
+			"An unexpected error occurred while parsing the resource read response. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	_ = d.Set("scope", cred.Scope)
-	_ = d.Set("description", cred.Description)
+	data.ID = types.StringValue(generateCredentialID(data.Folder.ValueString(), cred.ID))
+	data.Scope = types.StringValue(cred.Scope)
+	data.Description = types.StringValue(cred.Description)
+
 	// NOTE: We are NOT setting the secret here, as the secret returned by GetSingle is garbage
-	// Secret only applies to Create/Update operations if the "password" property is non-empty
+	// Secret only applies to Create/Update operations if the "secret" property is non-empty
 
-	return nil
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialSecretTextUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Update is called to update the state of the resource. Config, planned
+// state, and prior state values should be read from the
+// UpdateRequest and new state values set on the UpdateResponse.
+func (r *credentialSecretTextResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data credentialSecretTextResourceModel
 
-	domain := d.Get("domain").(string)
+	// Read Terraform plan data into the model
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
 	cred := jenkins.StringCredentials{
-		ID:          d.Get("name").(string),
-		Scope:       d.Get("scope").(string),
-		Description: d.Get("description").(string),
-		Secret:      d.Get("secret").(string),
+		ID:          data.Name.ValueString(),
+		Scope:       data.Scope.ValueString(),
+		Description: data.Description.ValueString(),
 	}
 
-	err := cm.Update(ctx, domain, d.Get("name").(string), &cred)
+	// Only enforce the password if it is non-empty
+	if data.Secret.ValueString() != "" {
+		cred.Secret = data.Secret.ValueString()
+	}
+
+	err := cm.Update(ctx, data.Domain.ValueString(), data.Name.ValueString(), &cred)
 	if err != nil {
-		return diag.Errorf("Could not update secret text: %s", err)
+		resp.Diagnostics.AddError(
+			"Unable to Update Resource",
+			"An unexpected error occurred while attempting to update the resource. "+
+				"Please retry the operation or report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
 
-	d.SetId(generateCredentialID(d.Get("folder").(string), cred.ID))
-	return resourceJenkinsCredentialSecretTextRead(ctx, d, meta)
+	// Save updated data into Terraform state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func resourceJenkinsCredentialSecretTextDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	cm := meta.(jenkinsClient).Credentials()
-	cm.Folder = formatFolderName(d.Get("folder").(string))
+// Delete is called when the provider must delete the resource. Config
+// values may be read from the DeleteRequest.
+//
+// If execution completes without error, the framework will automatically
+// call DeleteResponse.State.RemoveResource(), so it can be omitted
+// from provider logic.
+func (r *credentialSecretTextResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data credentialSecretTextResourceModel
 
-	err := cm.Delete(
-		ctx,
-		d.Get("domain").(string),
-		d.Get("name").(string),
-	)
+	// Read Terraform prior state data into the model
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	cm := r.client.Credentials()
+	cm.Folder = formatFolderName(data.Folder.ValueString())
+
+	err := cm.Delete(ctx, data.Domain.ValueString(), data.Name.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.AddError(
+			"Unable to Delete Resource",
+			"An unexpected error occurred while deleting the resource. "+
+				"Please report this issue to the provider developers.\n\n"+
+				"Error: "+err.Error(),
+		)
+
+		return
 	}
-
-	return nil
-}
-
-func resourceJenkinsCredentialSecretTextImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	ret := []*schema.ResourceData{d}
-
-	splitID := strings.Split(d.Id(), "/")
-	if len(splitID) < 2 {
-		return ret, fmt.Errorf("import ID was improperly formatted. Imports need to be in the format \"[<folder>/]<domain>/<name>\"")
-	}
-
-	name := splitID[len(splitID)-1]
-	_ = d.Set("name", name)
-
-	domain := splitID[len(splitID)-2]
-	_ = d.Set("domain", domain)
-
-	folder := strings.Trim(strings.Join(splitID[0:len(splitID)-2], "/"), "/")
-	_ = d.Set("folder", folder)
-
-	d.SetId(generateCredentialID(folder, name))
-	return ret, nil
 }
