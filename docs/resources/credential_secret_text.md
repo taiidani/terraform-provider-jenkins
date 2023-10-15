@@ -24,14 +24,14 @@ resource "jenkins_credential_secret_text" "example" {
 
 ### Required
 
-- `name` (String) The name of the credentials being created. This maps to the ID property within Jenkins, and cannot be changed once set.
+- `name` (String) The name of the resource being created. This maps to the ID property within Jenkins, and cannot be changed once set.
 - `secret` (String, Sensitive) The secret text to be associated with the credentials.
 
 ### Optional
 
 - `description` (String) A human readable description of the credentials being stored.
 - `domain` (String) The domain store to place the credentials into. If not set will default to the global credentials store.
-- `folder` (String) The folder namespace to store the credentials in. If not set will default to global Jenkins credentials.
+- `folder` (String) The folder namespace to store the resource in. If not set will default to global Jenkins.
 - `scope` (String) The visibility of the credentials to Jenkins agents. This must be set to either "GLOBAL" or "SYSTEM". If not set will default to "GLOBAL".
 
 ### Read-Only

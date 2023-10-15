@@ -124,6 +124,7 @@ func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.D
 	return []func() datasource.DataSource{
 		newCredentialUsernameDataSource,
 		newCredentialVaultAppRoleDataSource,
+		newViewDataSource,
 	}
 }
 
@@ -136,5 +137,6 @@ func (p *JenkinsProvider) Resources(ctx context.Context) []func() resource.Resou
 		newCredentialSSHResource,
 		newCredentialUsernameResource,
 		newCredentialVaultAppRoleResource,
+		newViewResource,
 	}
 }
