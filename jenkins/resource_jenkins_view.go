@@ -53,7 +53,7 @@ Manages a view within Jenkins.
 				MarkdownDescription: "The unique name of this view.",
 			},
 			"assigned_projects": schema.ListAttribute{
-				MarkdownDescription: "The list of projects assigned to the view.",
+				MarkdownDescription: "The list of projects assigned to the view. For example, the name of a folder.",
 				Optional:            true,
 				ElementType:         types.StringType,
 				PlanModifiers: []planmodifier.List{
@@ -113,12 +113,24 @@ func (r *ViewResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 	assigedProjects := data.AssignedProjects.Elements()
 	for _, project := range assigedProjects {
-		_, err := view.AddJob(ctx, project.String())
+		projectName := strings.Trim(project.String(), "\"")
+		_, err := view.AddJob(ctx, projectName)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Unable to Assign View Projects",
-				fmt.Sprintf("Error adding %s to Jenkins view %s: %s", project.String(), data.Name.ValueString(), err),
+				fmt.Sprintf("Error adding %q to Jenkins view %q: %s", projectName, data.Name.ValueString(), err),
 			)
+
+			_, err := cm.J.Requester.Post(ctx, "/view/"+data.Name.ValueString()+"/doDelete", nil, nil, nil)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Unable to Delete Resource",
+					"An unexpected error occurred while deleting the resource. "+
+						"Please report this issue to the provider developers.\n\n"+
+						"Error: "+err.Error(),
+				)
+			}
+
 			return
 		}
 	}
