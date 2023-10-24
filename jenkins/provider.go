@@ -44,13 +44,11 @@ func Provider() *schema.Provider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
-			"jenkins_folder": dataSourceJenkinsFolder(),
-			"jenkins_job":    dataSourceJenkinsJob(),
+			"jenkins_job": dataSourceJenkinsJob(),
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"jenkins_folder": resourceJenkinsFolder(),
-			"jenkins_job":    resourceJenkinsJob(),
+			"jenkins_job": resourceJenkinsJob(),
 		},
 
 		ConfigureContextFunc: configureProvider,

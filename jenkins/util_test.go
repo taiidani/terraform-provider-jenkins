@@ -109,7 +109,7 @@ func TestTemplateDiff(t *testing.T) {
 }
 
 func TestTemplateDiff_HTMLEntities(t *testing.T) {
-	job := resourceJenkinsFolder()
+	job := resourceJenkinsJob()
 	bag := job.TestResourceData()
 	_ = bag.Set("description", "Case")
 
