@@ -3,6 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -86,6 +87,12 @@ func (r *resourceHelper) schema(s map[string]schema.Attribute) map[string]schema
 			MarkdownDescription: "The name of the resource being created. This maps to the ID property within Jenkins, and cannot be changed once set.",
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),
+			},
+			Validators: []validator.String{
+				stringvalidator.RegexMatches(
+					regexp.MustCompile(`^[^/]*$`),
+					"must not include path characters. Please use the 'folder' property if specifying a job within a subfolder",
+				),
 			},
 		}
 	}
