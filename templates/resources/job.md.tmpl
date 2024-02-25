@@ -58,7 +58,6 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the job being created.
 * `folder` - (Optional) The folder namespace to store the job in. If creating in a nested folder structure you may separate folder names with `/`, such as `parent/child`. This name cannot be changed once the folder has been created, and all parent folders must be created in advance.
-* `parameters` - (Optional) A map of string values that are passed into the template for rendering. **Deprecated:** Please use Terraform's built-in [templatefile](https://www.terraform.io/docs/language/functions/templatefile.html) function instead of this property.
 * `template` - (Required) A Jenkins-compatible XML template to describe the job. You can retrieve an existing jobs' XML by appending `/config.xml` to its URL and viewing the source in your browser. The `template` property is rendered using a Golang template that takes the other resource arguments as variables. Do not include the XML prolog in the definition.
 
 ## Attribute Reference

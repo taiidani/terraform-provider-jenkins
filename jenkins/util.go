@@ -77,8 +77,6 @@ func folderExists(ctx context.Context, client jenkinsClient, name string) error 
 }
 
 func templateDiff(k, old, new string, d *schema.ResourceData) bool {
-	new, _ = renderTemplate(new, d)
-
 	// Sanitize the XML entries to prevent inadvertent inequalities
 	re := regexp.MustCompile(`<\?xml.+\?>`)
 	old = re.ReplaceAllString(old, "")
