@@ -40,13 +40,6 @@ func resourceJenkinsJob() *schema.Resource {
 				Required:         true,
 				DiffSuppressFunc: templateDiff,
 			},
-			"parameters": {
-				Type:        schema.TypeMap,
-				Description: "The set of parameters to be rendered in the template when generating a valid config.xml file.",
-				Optional:    true,
-				Deprecated:  "Use the built-in templatefile function to render your parameters in the future.",
-				Elem:        schema.TypeString,
-			},
 		},
 	}
 }
@@ -61,13 +54,9 @@ func resourceJenkinsJobCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(fmt.Errorf("jenkins::create - Could not find folder '%s': %w", folderName, err))
 	}
 
-	xml, err := renderTemplate(d.Get("template").(string), d)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::create - Error binding config.xml template to %q: %w", name, err))
-	}
-
+	xml := d.Get("template").(string)
 	folders := extractFolders(folderName)
-	_, err = client.CreateJobInFolder(ctx, xml, name, folders...)
+	_, err := client.CreateJobInFolder(ctx, xml, name, folders...)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("jenkins::create - Error creating job for %q in folder %s: %w", name, folderName, err))
 	}
@@ -127,10 +116,7 @@ func resourceJenkinsJobUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.FromErr(fmt.Errorf("jenkins::update - Could not find job %q: %w", name, err))
 	}
 
-	xml, err := renderTemplate(d.Get("template").(string), d)
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("jenkins::update - Error binding config.xml template to %q: %w", name, err))
-	}
+	xml := d.Get("template").(string)
 
 	err = job.UpdateConfig(ctx, xml)
 	if err != nil {
