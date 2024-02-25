@@ -26,6 +26,22 @@ run "jobs" {
   }
 
   assert {
+    condition     = chomp(data.jenkins_folder.example.template) == chomp(jenkins_folder.example.template)
+    error_message = "${data.jenkins_folder.example.name} produced inconsistent XML"
+  }
+  assert {
+    condition     = data.jenkins_folder.example.description == jenkins_folder.example.description
+    error_message = "${data.jenkins_folder.example.name} did not match description"
+  }
+  assert {
+    condition     = chomp(data.jenkins_folder.example_subfolder.template) == chomp(jenkins_folder.example_subfolder.template)
+    error_message = "${data.jenkins_folder.example_subfolder.name} produced inconsistent XML"
+  }
+  assert {
+    condition     = data.jenkins_folder.example_subfolder.description == jenkins_folder.example_subfolder.description
+    error_message = "${data.jenkins_folder.example_subfolder.name} did not match description"
+  }
+  assert {
     condition     = chomp(coalesce(data.jenkins_job.pipeline_scm.template, "")) == chomp(local.pipeline_scm_template)
     error_message = "${data.jenkins_job.pipeline_scm.name} produced inconsistent XML"
   }
@@ -38,8 +54,8 @@ run "jobs" {
     error_message = "${data.jenkins_job.freestyle.name} produced inconsistent XML"
   }
   assert {
-    condition     = output.view.name == "example"
-    error_message = "${output.view.name} did not contain expected \"example\" value"
+    condition     = data.jenkins_view.example.name == "example"
+    error_message = "${data.jenkins_view.example.name} did not contain expected \"example\" value"
   }
 }
 
