@@ -15,7 +15,7 @@ func resourceJenkinsFolder() *schema.Resource {
 		CreateContext: resourceJenkinsFolderCreate,
 		ReadContext:   resourceJenkinsFolderRead,
 		UpdateContext: resourceJenkinsFolderUpdate,
-		DeleteContext: resourceJenkinsJobDelete,
+		DeleteContext: resourceJenkinsFolderDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -207,6 +207,21 @@ func resourceJenkinsFolderUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	return resourceJenkinsFolderRead(ctx, d, meta)
+}
+
+func resourceJenkinsFolderDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(jenkinsClient)
+	name, folders := parseCanonicalJobID(d.Id())
+
+	log.Printf("[DEBUG] jenkins::delete - Removing %q", name)
+
+	ok, err := client.DeleteJobInFolder(ctx, name, folders...)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	log.Printf("[DEBUG] jenkins::delete - %q removed: %t", name, ok)
+	return nil
 }
 
 func expandSecurity(config []interface{}) *folderSecurity {
