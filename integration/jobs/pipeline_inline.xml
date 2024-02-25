@@ -16,9 +16,9 @@
     agent any
 
     stages {
-        stage(&apos;Hello&apos;) {
+        stage('Hello') {
             steps {
-                echo &apos;Hello World&apos;
+                echo 'Hello World'
             }
         }
     }
