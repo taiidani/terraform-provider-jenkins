@@ -78,54 +78,6 @@ func TestParseCanonicalJobID(t *testing.T) {
 	}
 }
 
-func TestTemplateDiff(t *testing.T) {
-	// Set up inputs
-	inputLeft := "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>Test Case</root>"
-	inputRight := "<root>Test Case</root>"
-
-	// Set up Job
-	job := resourceJenkinsJob()
-	bag := job.TestResourceData()
-
-	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
-		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
-	}
-
-	// Now try invalid inputs
-	inputLeft = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root>Test Incorrect</root>"
-	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
-		t.Errorf("Expected %s to be considered inequal to %s", inputLeft, inputRight)
-	}
-
-	inputRight = "<root>Test Incorrect</root>"
-	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
-		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
-	}
-
-	inputRight = "<root>Test Even More Incorrect</root>"
-	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
-		t.Errorf("Expected %s to be considered inequal to %s", inputLeft, inputRight)
-	}
-}
-
-func TestTemplateDiff_HTMLEntities(t *testing.T) {
-	job := resourceJenkinsFolder()
-	bag := job.TestResourceData()
-	_ = bag.Set("description", "Case")
-
-	inputLeft := "<root>&apos;/&apos;</root>"
-	inputRight := "<root>'/'</root>"
-	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
-		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
-	}
-
-	inputLeft = "<root>'/'</root>"
-	inputRight = "<root>&apos;/&apos;</root>"
-	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
-		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
-	}
-}
-
 func TestGenerateCredentialID(t *testing.T) {
 	inputFolder, inputName := "test-folder", "test-name"
 	actual := generateCredentialID(inputFolder, inputName)

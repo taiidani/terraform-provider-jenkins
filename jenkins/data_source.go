@@ -59,29 +59,21 @@ func (d *dataSourceHelper) schema(s map[string]schema.Attribute) map[string]sche
 			Optional:            true,
 		}
 	}
-	if _, ok := s["description"]; !ok {
-		s["description"] = schema.StringAttribute{
-			MarkdownDescription: "A human readable description of the resource.",
-			Computed:            true,
-		}
-	}
 
 	return s
 }
 
 func (d *dataSourceHelper) schemaCredential(s map[string]schema.Attribute) map[string]schema.Attribute {
-	// Override the base schema with more specific messaging
+	// Pull in the base schema
+	s = d.schema(s)
+
+	// Add credential-specific attributes
 	if _, ok := s["description"]; !ok {
 		s["description"] = schema.StringAttribute{
 			MarkdownDescription: "A human readable description of the credentials being stored.",
 			Computed:            true,
 		}
 	}
-
-	// Pull in the base schema
-	s = d.schema(s)
-
-	// Add credential-specific attributes
 	if _, ok := s["domain"]; !ok {
 		s["domain"] = schema.StringAttribute{
 			MarkdownDescription: "The domain store containing this resource.",

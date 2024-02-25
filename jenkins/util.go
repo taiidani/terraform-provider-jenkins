@@ -3,12 +3,7 @@ package jenkins
 import (
 	"context"
 	"fmt"
-	"html"
-	"log"
-	"regexp"
 	"strings"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // formatFolderName will format a folder name in the way that Jenkins expects, with "name/job/name" separators.
@@ -74,25 +69,6 @@ func folderExists(ctx context.Context, client jenkinsClient, name string) error 
 	}
 
 	return nil
-}
-
-func templateDiff(k, old, new string, d *schema.ResourceData) bool {
-	new, _ = renderTemplate(new, d)
-
-	// Sanitize the XML entries to prevent inadvertent inequalities
-	re := regexp.MustCompile(`<\?xml.+\?>`)
-	old = re.ReplaceAllString(old, "")
-	old = strings.Replace(old, " ", "", -1)
-	old = strings.TrimSpace(old)
-	old = html.UnescapeString(old)
-	new = re.ReplaceAllString(new, "")
-	new = strings.Replace(new, " ", "", -1)
-	new = strings.TrimSpace(new)
-	new = html.UnescapeString(new)
-
-	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
-	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
-	return old == new
 }
 
 func generateCredentialID(folder, name string) string {
