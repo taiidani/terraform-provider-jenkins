@@ -41,6 +41,10 @@ func (d *ViewDataSource) Schema(ctx context.Context, req datasource.SchemaReques
 				Computed:            true,
 				MarkdownDescription: "The unique name of this view.",
 			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "A human readable description of the view.",
+				Computed:            true,
+			},
 			"url": schema.StringAttribute{
 				MarkdownDescription: "The url for the view.",
 				Computed:            true,

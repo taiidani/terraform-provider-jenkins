@@ -98,19 +98,14 @@ func (r *resourceHelper) schema(s map[string]schema.Attribute) map[string]schema
 			},
 		}
 	}
-	if _, ok := s["description"]; !ok {
-		s["description"] = schema.StringAttribute{
-			MarkdownDescription: "A human readable description of the resource.",
-			Optional:            true,
-			Computed:            true,
-			Default:             stringdefault.StaticString("Managed by Terraform"),
-		}
-	}
 
 	return s
 }
 func (r *resourceHelper) schemaCredential(s map[string]schema.Attribute) map[string]schema.Attribute {
-	// Override the base schema with more specific messaging
+	// Pull in the base schema
+	s = r.schema(s)
+
+	// Add credential-specific attributes
 	if _, ok := s["description"]; !ok {
 		s["description"] = schema.StringAttribute{
 			MarkdownDescription: "A human readable description of the credentials being stored.",
@@ -119,11 +114,6 @@ func (r *resourceHelper) schemaCredential(s map[string]schema.Attribute) map[str
 			Default:             stringdefault.StaticString("Managed by Terraform"),
 		}
 	}
-
-	// Pull in the base schema
-	s = r.schema(s)
-
-	// Add credential-specific attributes
 	if _, ok := s["domain"]; !ok {
 		s["domain"] = schema.StringAttribute{
 			MarkdownDescription: "The domain store to place the credentials into. If not set will default to the global credentials store.",

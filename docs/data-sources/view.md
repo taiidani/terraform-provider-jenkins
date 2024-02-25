@@ -25,6 +25,6 @@ Get the attributes of a view within Jenkins.
 
 ### Read-Only
 
-- `description` (String) A human readable description of the resource.
+- `description` (String) A human readable description of the view.
 - `id` (String) The unique name of this view.
 - `url` (String) The url for the view.
