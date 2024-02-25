@@ -8,3 +8,7 @@ terraform.tfstate*
 vendor
 dist/
 coverage.txt
+
+# This binary appears when the user runs "go build".
+# It should not typically be built. "go install" is recommended instead.
+terraform-provider-jenkins
