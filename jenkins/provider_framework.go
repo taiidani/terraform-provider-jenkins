@@ -125,6 +125,7 @@ func (p *JenkinsProvider) DataSources(ctx context.Context) []func() datasource.D
 		newCredentialUsernameDataSource,
 		newCredentialVaultAppRoleDataSource,
 		newViewDataSource,
+		newJobDataSource,
 	}
 }
 
