@@ -3,14 +3,14 @@ export COMPOSE_FILE=./integration/docker-compose.yml
 
 default: build
 
-# Builds the provider and adds it to your GOPATH/bin folder.
+# Builds the provider and adds it to your GOBIN folder.
 build:
 	go install
-	@echo "Binary has been compiled to $(shell go env GOPATH)/bin/${BINARY}"
+	@echo "Binary has been compiled to $(shell go env GOBIN)/${BINARY}"
 	@echo "In order to have Terraform pick this up you will need to add the following to your $$HOME/.terraformrc file:"
 	@echo "  provider_installation {"
 	@echo "    dev_overrides {"
-	@echo "      \"taiidani/jenkins\" = \"$(shell go env GOPATH)/bin\""
+	@echo "      \"taiidani/jenkins\" = \"$(shell go env GOBIN)\""
 	@echo "    }"
 	@echo "    direct {}"
 	@echo "  }"
@@ -35,4 +35,4 @@ testacc:
 
 # Cleans up any lingering items in your system created by this provider.
 clean:
-	rm -f "$(shell go env GOPATH)/bin/$(BINARY)"
+	rm -f "$(shell go env GOBIN)/$(BINARY)"
