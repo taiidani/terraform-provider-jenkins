@@ -1,6 +1,6 @@
 module tools
 
-go 1.19
+go 1.22.0
 
 require github.com/hashicorp/terraform-plugin-docs v0.18.0
 
@@ -13,7 +13,7 @@ require (
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/cli v1.1.6 // indirect
