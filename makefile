@@ -27,11 +27,11 @@ test:
 
 # Executes all acceptance tests for the provider
 testacc:
-	@docker-compose build
-	@docker-compose up -d --force-recreate jenkins
+	@docker compose build
+	@docker compose up -d --force-recreate jenkins
 	@while [ "$$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
 	TF_ACC=1 JENKINS_URL="http://localhost:8080" JENKINS_USERNAME="admin" JENKINS_PASSWORD="admin" go test -v -cover ./...
-	@docker-compose down
+	@docker compose down
 
 # Cleans up any lingering items in your system created by this provider.
 clean:
