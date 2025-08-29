@@ -100,4 +100,12 @@ run "credentials" {
     condition     = output.vault_approle.namespace == jenkins_credential_vault_approle.global.namespace
     error_message = "${output.vault_approle.namespace} data value did not match resource value"
   }
+  assert {
+    condition     = output.aws_cred.access_key == jenkins_credential_aws.global.access_key
+    error_message = "${nonsensitive(output.aws_cred.access_key)} data value did not match resource value" 
+  }
+  assert {
+    condition     = output.aws_cred_folder.access_key == jenkins_credential_aws.folder_iam.access_key
+    error_message = "${nonsensitive(output.aws_cred_folder.access_key)} data value did not match resource value"
+  }
 }
