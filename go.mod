@@ -1,8 +1,6 @@
 module github.com/taiidani/terraform-provider-jenkins
 
-go 1.21
-
-toolchain go1.21.0
+go 1.22.0
 
 require (
 	github.com/bndr/gojenkins v1.1.1-0.20210407143218-9e2483ff7ebd
@@ -19,7 +17,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
