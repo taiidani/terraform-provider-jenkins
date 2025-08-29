@@ -102,7 +102,7 @@ run "credentials" {
   }
   assert {
     condition     = output.aws_cred.access_key == jenkins_credential_aws.global.access_key
-    error_message = "${nonsensitive(output.aws_cred.access_key)} data value did not match resource value" 
+    error_message = "${nonsensitive(output.aws_cred.access_key)} data value did not match resource value"
   }
   assert {
     condition     = output.aws_cred_folder.access_key == jenkins_credential_aws.folder_iam.access_key

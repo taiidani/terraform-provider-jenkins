@@ -8,6 +8,7 @@ terraform.tfstate*
 vendor
 dist/
 coverage.txt
+mise.local.toml
 
 # This binary appears when the user runs "go build".
 # It should not typically be built. "go install" is recommended instead.

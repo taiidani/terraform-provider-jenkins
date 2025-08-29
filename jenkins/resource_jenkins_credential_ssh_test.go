@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -176,7 +177,7 @@ func testAccCheckJenkinsCredentialSSHExists(resourceName string, cred *jenkins.S
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf(resourceName + " not found")
+			return errors.New(resourceName + " not found")
 		}
 
 		if rs.Primary.ID == "" {
