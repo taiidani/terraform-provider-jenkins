@@ -80,11 +80,11 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	// Sanitize the XML entries to prevent inadvertent inequalities
 	re := regexp.MustCompile(`<\?xml.+\?>`)
 	old = re.ReplaceAllString(old, "")
-	old = strings.Replace(old, " ", "", -1)
+	old = strings.ReplaceAll(old, " ", "")
 	old = strings.TrimSpace(old)
 	old = html.UnescapeString(old)
 	new = re.ReplaceAllString(new, "")
-	new = strings.Replace(new, " ", "", -1)
+	new = strings.ReplaceAll(new, " ", "")
 	new = strings.TrimSpace(new)
 	new = html.UnescapeString(new)
 
