@@ -1,8 +1,8 @@
 module github.com/taiidani/terraform-provider-jenkins
 
-go 1.21
+go 1.24
 
-toolchain go1.21.0
+toolchain go1.24.3
 
 require (
 	github.com/bndr/gojenkins v1.1.1-0.20210407143218-9e2483ff7ebd

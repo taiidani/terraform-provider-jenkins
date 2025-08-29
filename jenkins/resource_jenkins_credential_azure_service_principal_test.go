@@ -2,6 +2,7 @@ package jenkins
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -173,7 +174,7 @@ func testAccCheckJenkinsCredentialAzureServicePrincipalExists(resourceName strin
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf(resourceName + " not found")
+			return errors.New(resourceName + " not found")
 		}
 
 		if rs.Primary.ID == "" {
