@@ -75,7 +75,7 @@ jobs:
           cat << EOF > ~/.terraformrc
           provider_installation {
             dev_overrides {
-              "taiidani/jenkins" = "$(go env GOPATH)/bin"
+              "taiidani/jenkins" = "$(go env GOBIN)"
             }
             direct {}
           }
