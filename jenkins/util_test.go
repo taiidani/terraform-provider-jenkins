@@ -133,3 +133,81 @@ func TestGenerateCredentialID(t *testing.T) {
 		t.Errorf("Expected %s/%s but got: %s", inputFolder, inputName, actual)
 	}
 }
+
+func TestNormalizeXMLPluginVersions(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "single plugin",
+			input:    `<flow-definition plugin="workflow-job@2.25">`,
+			expected: `<flow-definition plugin="workflow-job">`,
+		},
+		{
+			name:     "multiple plugins",
+			input:    `<flow-definition plugin="workflow-job@2.25"><definition plugin="workflow-cps@2.59">`,
+			expected: `<flow-definition plugin="workflow-job"><definition plugin="workflow-cps">`,
+		},
+		{
+			name:     "no plugins",
+			input:    `<project><description>test</description></project>`,
+			expected: `<project><description>test</description></project>`,
+		},
+		{
+			name:     "mixed content",
+			input:    `<scm class="hudson.plugins.git.GitSCM" plugin="git@3.9.1"><url>test</url></scm>`,
+			expected: `<scm class="hudson.plugins.git.GitSCM" plugin="git"><url>test</url></scm>`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := NormalizeXMLPluginVersions(tt.input)
+			if actual != tt.expected {
+				t.Errorf("Expected %s but got: %s", tt.expected, actual)
+			}
+		})
+	}
+}
+
+func TestTemplateDiff_SkipPluginVersions(t *testing.T) {
+	// Set up Job
+	job := resourceJenkinsJob()
+
+	// Test case 1: skip_plugins_version_update = true, should ignore version differences
+	bagWithSkip := job.TestResourceData()
+	_ = bagWithSkip.Set("skip_plugins_version_update", true)
+
+	inputOld := `<flow-definition plugin="workflow-job@2.25"><definition plugin="workflow-cps@2.59"></definition></flow-definition>`
+	inputNew := `<flow-definition plugin="workflow-job@3.0"><definition plugin="workflow-cps@3.0"></definition></flow-definition>`
+
+	if actual := templateDiff("", inputOld, inputNew, bagWithSkip); !actual {
+		t.Errorf("Expected XMLs with different plugin versions to be considered equal when skip_plugins_version_update=true")
+	}
+
+	// Test case 2: skip_plugins_version_update = false, should detect version differences
+	bagWithoutSkip := job.TestResourceData()
+	_ = bagWithoutSkip.Set("skip_plugins_version_update", false)
+
+	if actual := templateDiff("", inputOld, inputNew, bagWithoutSkip); actual {
+		t.Errorf("Expected XMLs with different plugin versions to be considered inequal when skip_plugins_version_update=false")
+	}
+
+	// Test case 3: skip_plugins_version_update = true but old is empty (create), should not skip
+	inputOldEmpty := ""
+	inputNewCreate := `<flow-definition plugin="workflow-job@2.25"></flow-definition>`
+
+	if actual := templateDiff("", inputOldEmpty, inputNewCreate, bagWithSkip); actual {
+		t.Errorf("Expected comparison with empty old value to work normally even with skip_plugins_version_update=true")
+	}
+
+	// Test case 4: skip_plugins_version_update = true, but actual content differs
+	inputOldDifferent := `<flow-definition plugin="workflow-job@2.25"><description>old</description></flow-definition>`
+	inputNewDifferent := `<flow-definition plugin="workflow-job@3.0"><description>new</description></flow-definition>`
+
+	if actual := templateDiff("", inputOldDifferent, inputNewDifferent, bagWithSkip); actual {
+		t.Errorf("Expected XMLs with different content to be considered inequal even when skip_plugins_version_update=true")
+	}
+}

@@ -77,6 +77,18 @@ func folderExists(ctx context.Context, client jenkinsClient, name string) error 
 }
 
 func templateDiff(k, old, new string, d *schema.ResourceData) bool {
+	// Check if we should skip plugin version updates - do this BEFORE any XML manipulation
+	skipPluginVersions := false
+	if v, ok := d.GetOk("skip_plugins_version_update"); ok {
+		skipPluginVersions = v.(bool)
+	}
+
+	// Normalize plugin versions FIRST, before any string manipulation (only for existing jobs)
+	if skipPluginVersions && old != "" {
+		old = NormalizeXMLPluginVersions(old)
+		new = NormalizeXMLPluginVersions(new)
+	}
+
 	// Sanitize the XML entries to prevent inadvertent inequalities
 	re := regexp.MustCompile(`<\?xml.+\?>`)
 	old = re.ReplaceAllString(old, "")
@@ -91,6 +103,13 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
 	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
 	return old == new
+}
+
+// NormalizeXMLPluginVersions removes plugin version from XML attributes
+func NormalizeXMLPluginVersions(xmlStr string) string {
+	// Remove plugin versions using regex: plugin="name@version" -> plugin="name"
+	re := regexp.MustCompile(`plugin="([^"@]+)@[^"]*"`)
+	return re.ReplaceAllString(xmlStr, `plugin="$1"`)
 }
 
 func generateCredentialID(folder, name string) string {

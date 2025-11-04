@@ -40,6 +40,12 @@ func resourceJenkinsJob() *schema.Resource {
 				Required:         true,
 				DiffSuppressFunc: templateDiff,
 			},
+			"skip_plugins_version_update": {
+				Type:        schema.TypeBool,
+				Description: "If true, ignore plugin version changes in XML configuration during updates and refreshes.",
+				Optional:    true,
+				Default:     false,
+			},
 		},
 	}
 }

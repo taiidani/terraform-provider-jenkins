@@ -15,6 +15,9 @@ resource "jenkins_job" "example" {
   template = templatefile("${path.module}/job.xml", {
     description = "An example job created from Terraform"
   })
+  
+  # Optional: Ignore plugin version changes from Jenkins updates
+  skip_plugins_version_update = true
 }
 ```
 
@@ -59,6 +62,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the job being created.
 * `folder` - (Optional) The folder namespace to store the job in. If creating in a nested folder structure you may separate folder names with `/`, such as `parent/child`. This name cannot be changed once the folder has been created, and all parent folders must be created in advance.
 * `template` - (Required) A Jenkins-compatible XML template to describe the job. You can retrieve an existing jobs' XML by appending `/config.xml` to its URL and viewing the source in your browser. The `template` property is rendered using a Golang template that takes the other resource arguments as variables. Do not include the XML prolog in the definition.
+* `skip_plugins_version_update` - (Optional) When set to `true`, ignores plugin version changes in the XML configuration during updates and refreshes. This prevents configuration drift when Jenkins updates plugins and modifies the XML accordingly. Default is `false`. Note: This only applies to existing jobs; newly created jobs will always use the template as provided.
 
 ## Attribute Reference
 
