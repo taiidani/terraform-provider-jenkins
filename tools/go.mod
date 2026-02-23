@@ -2,7 +2,7 @@ module tools
 
 go 1.24.0
 
-require github.com/hashicorp/terraform-plugin-docs v0.23.0
+require github.com/hashicorp/terraform-plugin-docs v0.24.0
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
@@ -27,8 +27,8 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/hc-install v0.9.2 // indirect
-	github.com/hashicorp/terraform-exec v0.23.1 // indirect
-	github.com/hashicorp/terraform-json v0.27.0 // indirect
+	github.com/hashicorp/terraform-exec v0.24.0 // indirect
+	github.com/hashicorp/terraform-json v0.27.2 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
