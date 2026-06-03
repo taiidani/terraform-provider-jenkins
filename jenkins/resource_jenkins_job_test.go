@@ -54,6 +54,70 @@ resource jenkins_job foo {
 	})
 }
 
+// TestAccJenkinsJob_utf8 is a regression test for a non-ASCII character (an
+// em-dash, U+2014) in a job's config.xml.
+//
+// The provider updates config.xml through gojenkins' Job.UpdateConfig
+// ("POST /job/<name>/config.xml"). Jenkins reads that body with getReader(),
+// which defaults to ISO-8859-1 and ignores the document's encoding
+// declaration. gojenkins before v1.2.0 sent no charset, so the em-dash's UTF-8
+// bytes decoded to an illegal XML character and the update failed with a 500
+// ("Failed to persist config.xml"). v1.2.0 sends "application/xml;charset=utf-8"
+// and the description round-trips.
+//
+// The bug is on update, not create: createItem decodes as UTF-8 regardless of
+// the charset header, so step one passes even against the old client. Step two
+// rewrites the description to the em-dash, exercising UpdateConfig.
+func TestAccJenkinsJob_utf8(t *testing.T) {
+	testDir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(testDir, "test.xml"), testXML, 0644)
+	randString := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+
+	jobConfig := func(description string) string {
+		return fmt.Sprintf(`
+resource jenkins_job foo {
+	name = "tf-acc-test-%s"
+	template = templatefile("%s/test.xml", {
+		description = %q
+	})
+}`, randString, testDir, description)
+	}
+
+	const utf8Description = "Acceptance testing Jenkins provider — UTF-8 round-trip"
+	wantUTF8Template := strings.Replace(
+		strings.TrimSpace(testXMLWant),
+		"Acceptance testing Jenkins provider",
+		utf8Description,
+		1,
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProviders,
+		CheckDestroy:             testAccCheckJenkinsJobDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create with an ASCII description.
+				Config: jobConfig("Acceptance testing Jenkins provider"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "template", strings.TrimSpace(testXMLWant)),
+				),
+			},
+			{
+				// Update the description to include a non-ASCII character. This
+				// drives Job.UpdateConfig, the path that 500s without the
+				// gojenkins charset fix.
+				Config: jobConfig(utf8Description),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
+					resource.TestCheckResourceAttr("jenkins_job.foo", "template", wantUTF8Template),
+				),
+			},
+		},
+	})
+}
+
 func TestAccJenkinsJob_nested(t *testing.T) {
 	testDir := t.TempDir()
 	_ = os.WriteFile(filepath.Join(testDir, "test.xml"), testXML, 0644)
