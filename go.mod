@@ -3,7 +3,7 @@ module github.com/taiidani/terraform-provider-jenkins
 go 1.24.3
 
 require (
-	github.com/bndr/gojenkins v1.1.1-0.20210407143218-9e2483ff7ebd
+	github.com/bndr/gojenkins v1.2.0
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0

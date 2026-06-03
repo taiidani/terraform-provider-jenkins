@@ -49,7 +49,11 @@ func TestNewJenkinsClient(t *testing.T) {
 	c = newJenkinsClient(&Config{
 		CACert: bytes.NewBufferString("certificate"),
 	})
-	if string(c.Requester.CACert) != "certificate" {
+	requester, ok := c.Requester.(*jenkins.Requester)
+	if !ok {
+		t.Fatalf("Expected Requester to be *jenkins.Requester, got %T", c.Requester)
+	}
+	if string(requester.CACert) != "certificate" {
 		t.Errorf("Initialization did not extract certificate data")
 	}
 }
