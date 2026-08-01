@@ -59,6 +59,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the job being created.
 * `folder` - (Optional) The folder namespace to store the job in. If creating in a nested folder structure you may separate folder names with `/`, such as `parent/child`. This name cannot be changed once the folder has been created, and all parent folders must be created in advance.
 * `template` - (Required) A Jenkins-compatible XML template to describe the job. You can retrieve an existing jobs' XML by appending `/config.xml` to its URL and viewing the source in your browser. The `template` property is rendered using a Golang template that takes the other resource arguments as variables. Do not include the XML prolog in the definition.
+* `skip_plugins_version_update` - (Optional) When `true`, plugin version changes in the job's XML are ignored when detecting drift. Jenkins rewrites `plugin="name@version"` attributes (e.g. `plugin="git@5.2.1"` -> `plugin="git@5.3.0"`) on every plugin upgrade, which otherwise appears as perpetual drift on `terraform plan`. Only diff detection is affected — the `template` pushed to Jenkins is unchanged, and a genuine plugin swap (different name) or any other content change is still reported. Defaults to `false`.
 
 ## Attribute Reference
 

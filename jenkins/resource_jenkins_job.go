@@ -40,6 +40,12 @@ func resourceJenkinsJob() *schema.Resource {
 				Required:         true,
 				DiffSuppressFunc: templateDiff,
 			},
+			"skip_plugins_version_update": {
+				Type:        schema.TypeBool,
+				Description: "When enabled, plugin version changes in the job's XML (e.g. plugin=\"git@5.2.1\" -> plugin=\"git@5.3.0\") are ignored during plan. Jenkins rewrites these on every plugin upgrade, which otherwise surfaces as perpetual drift. The template pushed to Jenkins is unchanged; only diff detection is affected.",
+				Optional:    true,
+				Default:     false,
+			},
 		},
 	}
 }
