@@ -108,6 +108,36 @@ func TestTemplateDiff(t *testing.T) {
 	}
 }
 
+func TestTemplateDiff_SkipPluginVersions(t *testing.T) {
+	inputLeft := `<scm class="hudson.plugins.git.GitSCM" plugin="git@5.2.1"><branch/></scm>`
+	inputRight := `<scm class="hudson.plugins.git.GitSCM" plugin="git@5.3.0"><branch/></scm>`
+
+	// Feature disabled (default): a plugin version bump is a real diff.
+	bag := resourceJenkinsJob().TestResourceData()
+	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
+		t.Errorf("Expected plugin version bump to be reported when skip disabled: %s vs %s", inputLeft, inputRight)
+	}
+
+	// Feature enabled: a plugin version bump is suppressed.
+	bag = resourceJenkinsJob().TestResourceData()
+	_ = bag.Set("skip_plugins_version_update", true)
+	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
+		t.Errorf("Expected plugin version bump to be suppressed when skip enabled: %s vs %s", inputLeft, inputRight)
+	}
+
+	// Even enabled, a genuine plugin swap (different name) is still reported.
+	inputRight = `<scm class="hudson.plugins.git.GitSCM" plugin="git-client@5.3.0"><branch/></scm>`
+	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
+		t.Errorf("Expected plugin name change to be reported: %s vs %s", inputLeft, inputRight)
+	}
+
+	// Even enabled, a real content change alongside a version bump is still reported.
+	inputRight = `<scm class="hudson.plugins.git.GitSCM" plugin="git@5.3.0"><branch>main</branch></scm>`
+	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
+		t.Errorf("Expected content change to be reported despite skip: %s vs %s", inputLeft, inputRight)
+	}
+}
+
 func TestTemplateDiff_HTMLEntities(t *testing.T) {
 	job := resourceJenkinsFolder()
 	bag := job.TestResourceData()

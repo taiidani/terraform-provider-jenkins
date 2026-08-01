@@ -76,17 +76,30 @@ func folderExists(ctx context.Context, client jenkinsClient, name string) error 
 	return nil
 }
 
+var (
+	xmlDeclRe       = regexp.MustCompile(`<\?xml.+\?>`)
+	pluginVersionRe = regexp.MustCompile(`(plugin="[^"@]+)@[^"]*"`)
+)
+
+// normalizeTemplate sanitizes a Jenkins job config so functionally-equal XML
+// compares equal. When skipPluginVersions is set, plugin versions are dropped
+// because Jenkins rewrites the plugin="name@version" attributes on every plugin
+// upgrade, which would otherwise surface as perpetual job drift.
+func normalizeTemplate(s string, skipPluginVersions bool) string {
+	s = xmlDeclRe.ReplaceAllString(s, "")
+	if skipPluginVersions {
+		s = pluginVersionRe.ReplaceAllString(s, `$1"`)
+	}
+	s = strings.ReplaceAll(s, " ", "")
+	s = strings.TrimSpace(s)
+	return html.UnescapeString(s)
+}
+
 func templateDiff(k, old, new string, d *schema.ResourceData) bool {
-	// Sanitize the XML entries to prevent inadvertent inequalities
-	re := regexp.MustCompile(`<\?xml.+\?>`)
-	old = re.ReplaceAllString(old, "")
-	old = strings.ReplaceAll(old, " ", "")
-	old = strings.TrimSpace(old)
-	old = html.UnescapeString(old)
-	new = re.ReplaceAllString(new, "")
-	new = strings.ReplaceAll(new, " ", "")
-	new = strings.TrimSpace(new)
-	new = html.UnescapeString(new)
+	// Comma-ok: templateDiff is shared with resources that lack this field.
+	skipPluginVersions, _ := d.Get("skip_plugins_version_update").(bool)
+	old = normalizeTemplate(old, skipPluginVersions)
+	new = normalizeTemplate(new, skipPluginVersions)
 
 	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
 	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
