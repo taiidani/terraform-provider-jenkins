@@ -1,6 +1,7 @@
 [tools]
 "github:hashicorp/terraform-plugin-docs" = "latest"
 go = "1.26"
+golangci-lint = "latest"
 terraform = "1.16"
 
 [tasks.generate]
@@ -9,4 +10,36 @@ run = """
 terraform fmt -recursive examples/
 # Generate documentation.
 tfplugindocs generate
+"""
+
+[tasks.lint]
+depends = ["lint:*"]
+
+[tasks."lint:golangci-lint"]
+run = "golangci-lint run --timeout 5m0s"
+
+[tasks."lint:vet"]
+run = "go vet ./..."
+
+[tasks.test]
+depends = ["test:*"]
+
+[tasks."test:unit"]
+run = "go test -race -v ./..."
+
+[tasks."test:acceptance"]
+env.COMPOSE_FILE = "./integration/docker-compose.yml"
+env.TF_ACC = "1"
+env.JENKINS_URL = "http://localhost:8080"
+env.JENKINS_USERNAME = "admin"
+env.JENKINS_PASSWORD = "admin"
+run = """
+docker compose build
+docker compose up -d --force-recreate jenkins
+{% raw %}
+while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
+{% endraw %}
+
+go test -v -covermode=atomic -coverprofile=coverage.txt ./...
+docker compose down
 """

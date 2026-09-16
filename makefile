@@ -1,5 +1,4 @@
 BINARY=terraform-provider-jenkins
-export COMPOSE_FILE=./integration/docker-compose.yml
 
 default: build
 
@@ -16,18 +15,6 @@ build:
 	@echo "  }"
 	@echo ""
 	@echo "This should only be used during development. See https://www.terraform.io/docs/commands/cli-config.html#development-overrides-for-provider-developers for details."
-
-# Executes all unit tests for the provider
-test:
-	go test -cover ./...
-
-# Executes all acceptance tests for the provider
-testacc:
-	@docker compose build
-	@docker compose up -d --force-recreate jenkins
-	@while [ "$$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status }}')" != "healthy" ]; do echo "Waiting for Jenkins to start..."; sleep 3; done
-	TF_ACC=1 JENKINS_URL="http://localhost:8080" JENKINS_USERNAME="admin" JENKINS_PASSWORD="admin" go test -v -cover ./...
-	@docker compose down
 
 # Cleans up any lingering items in your system created by this provider.
 clean:

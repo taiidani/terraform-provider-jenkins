@@ -22,24 +22,23 @@ The scope of the provider covers the entire (extendable) Jenkins API provided th
 
 Working on this provider requires the following:
 
-* [Terraform](https://www.terraform.io/downloads.html) 1.6.0+
-* [Go](http://www.golang.org) (version requirements documented in the `go.mod` file)
+* [Mise](https://mise.jdx.dev/) (for managing tools and tasks)
 * [Docker Engine](https://docs.docker.com/engine/install/) 20.10+ (for running acceptance tests)
 
 You will also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `${GOPATH}/bin` to your `$PATH`.
 
 To compile the provider, run `make`. This will install the provider into your GOPATH and print instructions on registering it into your system.
 
-In order to test the provider, you can simply run `make test`.
+There are many tests available for the provider. Run `mise run` and examine the options under the "test" namespace to select one.
 
 ```sh
-$ make test
+$ mise run
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
+In order to run the full suite of Acceptance tests, run `mise run test:acceptance`. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
 
 ```sh
-$ make testacc
+$ mise run test:acceptance
 ```
 
 In order to run the integration tests, navigate to the tests folder and run [terraform test](https://developer.hashicorp.com/terraform/language/tests) within it. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
