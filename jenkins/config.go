@@ -3,10 +3,37 @@ package jenkins
 import (
 	"context"
 	"io"
+	"net/http"
 	"strings"
 
 	jenkins "github.com/bndr/gojenkins"
 )
+
+// htmlBodyDiscardTransport works around a behavior change in gojenkins v1.2.0:
+// its response readers now error on non-JSON bodies that earlier versions
+// ignored. Jenkins serves error pages (e.g. a 404) and post-redirect landing
+// pages (e.g. after /doDelete) as text/html, which the client never reads.
+// Emptying those bodies lets gojenkins see EOF and surface the HTTP status
+// (e.g. 404) instead of a spurious "invalid character '<'" error. JSON and
+// config.xml (application/xml) responses are untouched.
+type htmlBodyDiscardTransport struct {
+	base http.RoundTripper
+}
+
+func (t *htmlBodyDiscardTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := t.base.RoundTrip(req)
+	if err != nil {
+		return resp, err
+	}
+
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
+		_ = resp.Body.Close()
+		resp.Body = io.NopCloser(strings.NewReader(""))
+		resp.ContentLength = 0
+	}
+
+	return resp, nil
+}
 
 type jenkinsClient interface {
 	CreateJobInFolder(ctx context.Context, config string, jobName string, parentIDs ...string) (*jenkins.Job, error)
@@ -31,10 +58,13 @@ type Config struct {
 }
 
 func newJenkinsClient(c *Config) *jenkinsAdapter {
-	client := jenkins.CreateJenkins(nil, c.ServerURL, c.Username, c.Password)
+	httpClient := &http.Client{Transport: &htmlBodyDiscardTransport{base: http.DefaultTransport}}
+	client := jenkins.CreateJenkins(httpClient, c.ServerURL, c.Username, c.Password)
 	if c.CACert != nil {
 		// provide CA certificate if server is using self-signed certificate
-		client.Requester.CACert, _ = io.ReadAll(c.CACert)
+		if requester, ok := client.Requester.(*jenkins.Requester); ok {
+			requester.CACert, _ = io.ReadAll(c.CACert)
+		}
 	}
 
 	// return the Jenkins API client
