@@ -44,9 +44,7 @@ $ mise run test:acceptance
 In order to run the integration tests, navigate to the tests folder and run [terraform test](https://developer.hashicorp.com/terraform/language/tests) within it. These tests require Docker to be installed on the machine that runs them, and do not create any remote resources.
 
 ```sh
-$ cd integration
-$ terraform init
-$ terraform test
+$ mise run test:integration
 ```
 
 When changing a data source or resource, you may need to update the documentation. This documentation is automatically rendered by https://github.com/hashicorp/terraform-plugin-docs. To trigger a render, execute:
