@@ -54,6 +54,12 @@ func handleXml(def string) []byte {
 	// This is a horrible practice...but Go doesn't seem to have any mature
 	// support for the XML 1.1 specification. As long as Jenkins doesn't make
 	// use of any 1.1 additions then this should still parse.
-	def = strings.ReplaceAll(def, `<?xml version='1.1' encoding='UTF-8'?>`, `<?xml version='1.0' encoding='UTF-8'?>`)
+	// Since Go’s XML parser doesn't require the XML declaration at all we can just drop it.
+	if strings.HasPrefix(def, "<?xml") {
+		end := strings.Index(def, "?>")
+		if end != -1 {
+			def = def[end+2:]
+		}
+	}
 	return []byte(def)
 }
