@@ -64,13 +64,8 @@ jobs:
           }
           EOF
 
-      - name: Init integration
-        working-directory: integration/
-        run: terraform init
-
-      - name: Run integration
-        working-directory: integration/
-        run: terraform test
+      - name: Run Integration Tests
+        run: mise run test:integration
 
   docs:
     runs-on: ubuntu-latest

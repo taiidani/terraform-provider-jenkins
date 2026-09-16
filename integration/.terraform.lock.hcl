@@ -5,6 +5,7 @@ provider "registry.terraform.io/hashicorp/random" {
   version     = "3.8.1"
   constraints = "~> 3.0, >= 3.5.0"
   hashes = [
+    "h1:Eexl06+6J+s75uD46+WnZtpJZYRVUMB0AiuPBifK6Jc=",
     "h1:u8AKlWVDTH5r9YLSeswoVEjiY72Rt4/ch7U+61ZDkiQ=",
     "zh:08dd03b918c7b55713026037c5400c48af5b9f468f483463321bd18e17b907b4",
     "zh:0eee654a5542dc1d41920bbf2419032d6f0d5625b03bd81339e5b33394a3e0ae",
@@ -23,9 +24,10 @@ provider "registry.terraform.io/hashicorp/random" {
 
 provider "registry.terraform.io/kreuzwerker/docker" {
   version     = "3.6.2"
-  constraints = "~> 3.0"
+  constraints = ">= 0.5.0, ~> 3.0"
   hashes = [
     "h1:/Oe7tViXf/xyQ4Pg8cDifMlD3RthOYkslwQiRgx7BTE=",
+    "h1:1K3j0xUY2D0+E+DBDQc6k1u6Al9MkuNWrIC9rnvwFSM=",
     "zh:22b51a8fb63481d290bdad9a221bc8c9e45d66d1a0cd45beed3f3627bf1debd8",
     "zh:2b902eb80a1ae033af1135cc165d192668820a7f8ea15beb5472f811c18bea1f",
     "zh:57815dcea28aedb86ed33924cd186aaee8bd31670bd78437a2a2daf2b00ce2ae",
@@ -46,6 +48,7 @@ provider "registry.terraform.io/taiidani/jenkins" {
   version     = "0.11.0"
   constraints = ">= 0.5.0, ~> 0.5"
   hashes = [
+    "h1:qLDAO1EV1fksTOcfYVeekBQHvYPnEc1LcYE/o04vpRI=",
     "h1:qpRj2zGPwEwC0ghPSra8x4cgzIoxtglQK4YDFXgHGNg=",
     "zh:10a2407dc509220bf05c042a26c380d1dafe274c987f922d4d4db69cfbff3adf",
     "zh:34d70ac5626938c9ef364a57724a1e02678d252e2f808ded2a27f1dc252a387a",

@@ -43,3 +43,11 @@ while [ "$(docker inspect jenkins-provider-acc --format '{{ .State.Health.Status
 go test -v -covermode=atomic -coverprofile=coverage.txt ./...
 docker compose down
 """
+
+[tasks."test:integration"]
+description = "Run integration tests"
+dir = "integration"
+run = """
+terraform init
+terraform test
+"""
