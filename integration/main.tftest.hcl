@@ -21,10 +21,6 @@ run "jobs" {
     port = run.setup.port
   }
 
-  providers = {
-    random = random
-  }
-
   assert {
     condition     = chomp(data.jenkins_folder.example.template) == chomp(jenkins_folder.example.template)
     error_message = "${data.jenkins_folder.example.name} produced inconsistent XML"

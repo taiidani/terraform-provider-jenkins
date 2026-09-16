@@ -88,6 +88,14 @@ func templateDiff(k, old, new string, d *schema.ResourceData) bool {
 	new = strings.TrimSpace(new)
 	new = html.UnescapeString(new)
 
+	// Jenkins automatically annotates elements with the plugin that provides
+	// them (e.g. plugin="git@5.10.1"). Since this reflects whatever plugin
+	// version happens to be installed -- not anything the user configured --
+	// ignore it here to avoid perpetual diffs as plugins are upgraded.
+	pluginRe := regexp.MustCompile(`plugin="[^"]*"`)
+	old = pluginRe.ReplaceAllString(old, "")
+	new = pluginRe.ReplaceAllString(new, "")
+
 	log.Printf("[DEBUG] jenkins::diff - Old: %q", old)
 	log.Printf("[DEBUG] jenkins::diff - New: %q", new)
 	return old == new

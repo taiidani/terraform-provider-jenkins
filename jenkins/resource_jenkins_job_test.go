@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	jenkins "github.com/bndr/gojenkins"
@@ -47,7 +46,13 @@ resource jenkins_job foo {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("jenkins_job.foo", "name", "tf-acc-test-"+randString),
-					resource.TestCheckResourceAttr("jenkins_job.foo", "template", strings.TrimSpace(testXMLWant)),
+					resource.TestCheckResourceAttrWith("jenkins_job.foo", "template", func(value string) error {
+						got, want := normalizeJobXML(value), normalizeJobXML(testXMLWant)
+						if got != want {
+							return fmt.Errorf("expected template %q but got %q", want, got)
+						}
+						return nil
+					}),
 				),
 			},
 		},
@@ -84,7 +89,13 @@ resource jenkins_job sub {
 					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "name", "subfolder"),
 					resource.TestCheckResourceAttr("jenkins_job.sub", "folder", "/job/tf-acc-test-"+randString),
-					resource.TestCheckResourceAttr("jenkins_job.sub", "template", strings.TrimSpace(testXMLWant)),
+					resource.TestCheckResourceAttrWith("jenkins_job.sub", "template", func(value string) error {
+						got, want := normalizeJobXML(value), normalizeJobXML(testXMLWant)
+						if got != want {
+							return fmt.Errorf("expected template %q but got %q", want, got)
+						}
+						return nil
+					}),
 				),
 			},
 		},

@@ -1,4 +1,6 @@
-<?xml version="1.1" encoding="UTF-8"?><project>
+<?xml version="1.1" encoding="UTF-8"?>
+<project>
+  <actions/>
   <description>${description}</description>
   <keepDependencies>false</keepDependencies>
   <properties/>
@@ -11,7 +13,8 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>echo "Hello world"</command>
+      <command>echo &quot;Hello world&quot;</command>
+      <configuredLocalRules/>
     </hudson.tasks.Shell>
   </builders>
   <publishers/>

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -36,7 +35,13 @@ data jenkins_job foo {
 					resource.TestCheckResourceAttr("jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_job.foo", "id", "/job/tf-acc-test-"+randString),
 					resource.TestCheckResourceAttr("data.jenkins_job.foo", "name", "tf-acc-test-"+randString),
-					resource.TestCheckResourceAttr("data.jenkins_job.foo", "template", strings.TrimSpace(testXMLWant)),
+					resource.TestCheckResourceAttrWith("data.jenkins_job.foo", "template", func(value string) error {
+						got, want := normalizeJobXML(value), normalizeJobXML(testXMLWant)
+						if got != want {
+							return fmt.Errorf("expected template %q but got %q", want, got)
+						}
+						return nil
+					}),
 				),
 			},
 		},
@@ -75,7 +80,13 @@ data jenkins_job sub {
 					resource.TestCheckResourceAttr("jenkins_job.sub", "id", "/job/tf-acc-test-"+randString+"/job/subfolder"),
 					resource.TestCheckResourceAttr("data.jenkins_job.sub", "name", "subfolder"),
 					resource.TestCheckResourceAttr("data.jenkins_job.sub", "folder", "/job/tf-acc-test-"+randString),
-					resource.TestCheckResourceAttr("data.jenkins_job.sub", "template", strings.TrimSpace(testXMLWant)),
+					resource.TestCheckResourceAttrWith("data.jenkins_job.sub", "template", func(value string) error {
+						got, want := normalizeJobXML(value), normalizeJobXML(testXMLWant)
+						if got != want {
+							return fmt.Errorf("expected template %q but got %q", want, got)
+						}
+						return nil
+					}),
 				),
 			},
 		},
