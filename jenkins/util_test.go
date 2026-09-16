@@ -1,8 +1,28 @@
 package jenkins
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 )
+
+var (
+	xmlDeclRegexp       = regexp.MustCompile(`<\?xml.+?\?>`)
+	pluginAttrRegexp    = regexp.MustCompile(`\s+plugin="[^"]*"`)
+	interTagSpaceRegexp = regexp.MustCompile(`>\s+<`)
+)
+
+// normalizeJobXML strips the XML declaration, plugin version attributes, and
+// whitespace between tags so that job templates returned by Jenkins can be
+// compared without being sensitive to the specific plugin versions or
+// indentation style used by the Jenkins instance under test. Both drift over
+// time as the "jenkins/jenkins:lts" image and its plugins are updated.
+func normalizeJobXML(s string) string {
+	s = xmlDeclRegexp.ReplaceAllString(s, "")
+	s = pluginAttrRegexp.ReplaceAllString(s, "")
+	s = interTagSpaceRegexp.ReplaceAllString(s, "><")
+	return strings.TrimSpace(s)
+}
 
 func TestFormatFolderName(t *testing.T) {
 	inputSimple, inputFolder, inputNested, inputDuped := "job-name", "folder/job-name", "parent/child/job-name", "parent/job/child/job/job-name"
@@ -123,6 +143,26 @@ func TestTemplateDiff_HTMLEntities(t *testing.T) {
 	inputRight = "<root>&apos;/&apos;</root>"
 	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
 		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
+	}
+}
+
+func TestTemplateDiff_PluginAttributes(t *testing.T) {
+	job := resourceJenkinsJob()
+	bag := job.TestResourceData()
+
+	// Jenkins injects "plugin" attributes reflecting the currently installed
+	// plugin version. These should be ignored so that upgrading a Jenkins
+	// plugin doesn't produce a perpetual diff for users.
+	inputLeft := `<flow-definition plugin="workflow-job@2.25"><scm plugin="git@3.9.1"></scm></flow-definition>`
+	inputRight := `<flow-definition plugin="workflow-job@1600.v6f36ed83529d"><scm plugin="git@5.10.1"></scm></flow-definition>`
+	if actual := templateDiff("", inputLeft, inputRight, bag); !actual {
+		t.Errorf("Expected %s to be considered equal to %s", inputLeft, inputRight)
+	}
+
+	// A genuine content difference should still be detected
+	inputRight = `<flow-definition plugin="workflow-job@1600.v6f36ed83529d"><scm plugin="git@5.10.1"><url>changed</url></scm></flow-definition>`
+	if actual := templateDiff("", inputLeft, inputRight, bag); actual {
+		t.Errorf("Expected %s to be considered inequal to %s", inputLeft, inputRight)
 	}
 }
 

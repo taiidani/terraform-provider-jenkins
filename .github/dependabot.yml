@@ -31,3 +31,11 @@ updates:
     groups:
       integration:
         patterns: ["*"]
+
+  - package-ecosystem: "docker"
+    directory: "/integration"
+    schedule:
+      interval: "monthly"
+    groups:
+      docker:
+        patterns: ["*"]
