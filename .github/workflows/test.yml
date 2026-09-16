@@ -92,7 +92,7 @@ jobs:
       - uses: jdx/mise-action@v4
 
       - name: Generate Docs
-        run: make generate
+        run: mise run generate
 
       - name: Verify directory is clean
         run: test -z "$(git status --porcelain)"
@@ -100,4 +100,4 @@ jobs:
       - name: Error message
         if: failure()
         run: |
-          echo ':warning: Generated docs differs from committed docs. Did you forget to run `make generate`?' >> $GITHUB_STEP_SUMMARY
+          echo ':warning: Generated docs differs from committed docs. Did you forget to run `mise run generate`?' >> $GITHUB_STEP_SUMMARY

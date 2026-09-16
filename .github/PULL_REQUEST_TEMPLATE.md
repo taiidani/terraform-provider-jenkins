@@ -8,7 +8,7 @@
 
 # Test Steps
 
-- [ ] If you've changed documentation, have you run `make generate` to render the `docs/` folder?
+- [ ] If you've changed documentation, have you run `mise run generate` to render the `docs/` folder?
 - [ ] Have you updated the `integration/` tests with a [terraform test](https://developer.hashicorp.com/terraform/language/tests) compatible change?
 
 <!-- Additional test steps go here. -->

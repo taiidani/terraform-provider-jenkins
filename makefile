@@ -17,10 +17,6 @@ build:
 	@echo ""
 	@echo "This should only be used during development. See https://www.terraform.io/docs/commands/cli-config.html#development-overrides-for-provider-developers for details."
 
-# Formats TF files and generates documentation
-generate:
-	cd tools; go generate ./...
-
 # Executes all unit tests for the provider
 test:
 	go test -cover ./...

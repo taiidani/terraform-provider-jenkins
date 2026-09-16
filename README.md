@@ -53,7 +53,7 @@ $ terraform test
 When changing a data source or resource, you may need to update the documentation. This documentation is automatically rendered by https://github.com/hashicorp/terraform-plugin-docs. To trigger a render, execute:
 
 ```sh
-$ make generate
+$ mise run generate
 ```
 
 ## Attribution
