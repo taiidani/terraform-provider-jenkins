@@ -45,25 +45,24 @@ provider "registry.terraform.io/kreuzwerker/docker" {
 }
 
 provider "registry.terraform.io/taiidani/jenkins" {
-  version     = "0.11.0"
+  version     = "0.12.0"
   constraints = ">= 0.5.0, ~> 0.5"
   hashes = [
-    "h1:qLDAO1EV1fksTOcfYVeekBQHvYPnEc1LcYE/o04vpRI=",
-    "h1:qpRj2zGPwEwC0ghPSra8x4cgzIoxtglQK4YDFXgHGNg=",
-    "zh:10a2407dc509220bf05c042a26c380d1dafe274c987f922d4d4db69cfbff3adf",
-    "zh:34d70ac5626938c9ef364a57724a1e02678d252e2f808ded2a27f1dc252a387a",
-    "zh:489b0c364ee11d966145b4bbb8244ade2ce21f0493682b423cf00f86144727bc",
+    "h1:WWm1WzaVSKdInqRs1Od1ZKQFtUB7BBHfW98nqAXtqkY=",
+    "h1:mOThtxGIVxoOnmAQ/WqdcSyERUmJ+9SbnTyZz62M+Dc=",
+    "zh:00997e1cad32d893763f4777e7b52519e12fd358842edf1df002d724d4ea415c",
+    "zh:2c70b84a38e05e003d0847c2036f69ca428414db8d2f6e71d0a52e06c94c2f2c",
+    "zh:42425038d66a9a5758b9b6a77b2e64652ad24f072beb8056be60be81f5c57ba4",
+    "zh:446c009fb51c27be85645c3dd6ea8ff4eae96a88096aefc9e9cd690abc0b8156",
     "zh:4911602f91f30836861da6897b37bf5a3b5528481457c3b865afb9383b9af474",
-    "zh:72ea9a7bab2575ca6568d7b461718c5e7c584c9cfa5983e802beca6e9c560524",
-    "zh:777deaed8853a66ebae90c4b4b2c938bc3f45de9e72e6b96ffbc703043c30455",
-    "zh:8a7977e89c66d1f00b01103534628d71bbdf2c4bd30064e80d8fed9427f5330a",
-    "zh:8bc367e635bd3d86c7931ffa4c1f6f5833d10c09ce207e3a4ea783352e80d563",
-    "zh:a5f6564ed7a40ba64d1c62862c0bf6d22f22dfb06e4dbbbafa00e3efc2b8f170",
-    "zh:a984cff0554410f9b3d8e2b5908fe743c9a300c0c88015e95570139bf5da6e56",
-    "zh:aadec06bd7c0feff5fba95f5ea38acdfe4a73127e3c48b88b37dae9dbeb5b9c0",
-    "zh:afad4c12b65b76d67841a8362674915c25d69f8d4cb464531fa1637e86181afc",
-    "zh:d4daf87be4a3cbcd2c70cbcb25b92bb39c8eefddc2cf4b20f9c0eecd0ff41832",
-    "zh:dbed84e25a30ec15ec34e13fb1b05b378a394bab5ca1df5a17ad8f006bf57a72",
-    "zh:e9ac7a10a83d7c78d6313906e12b1d5dcddc538fdd8b4042fa6d9e3ab208304e",
+    "zh:5643c653f8d882a0996b28da0c484bc51ccc7902d539aa61083a0ca11d93b872",
+    "zh:6610c119b1eef3da1af7094c15fabac5544858c674d3b160f9158de75ca40933",
+    "zh:7087bdc1c29289ab08a8a4462238886bfdcdcd8a896251c8e6e6e2ec7714f30b",
+    "zh:75cd3dd9405899a83d3fee841e599a29922cdacb09502ee909d65d3fac8a9de8",
+    "zh:a03a1225f2f3f088b9bc184946fae64e8e2850e73a28b2bd6d47200e48dd5aa9",
+    "zh:a3d90c0d51cb0c7ffe9e4101c2df4d9ac605e6c886627c6979e636b617268c3d",
+    "zh:c23189fb3a7eb177e190c7cf0c00209e83ca6ed7d3ddf24c5d913cbc900dd77d",
+    "zh:e8f1f4e5b8c1d0c6d3a56c8d486e13667d413a58645d8e064cc985207aff60fa",
+    "zh:fc55faafd1dd586fb84fa4e36797579b1dab7b10f1c9f98f0030e5685e8378d6",
   ]
 }
