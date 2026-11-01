@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:2.568.3-lts
+FROM jenkins/jenkins:2.580.2-lts
 
 RUN jenkins-plugin-cli --plugins \
     azure-credentials:426.v5627e6a_4c7a_7 \
